@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { jwt_secret } from "../config/config.js";
 
+
 /**
  * ✅ Verify JWT and attach user payload to req.user
  */

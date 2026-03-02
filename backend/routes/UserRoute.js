@@ -1,16 +1,22 @@
-import express from 'express';
-import { approveUser, getAllUsers, getSingleUser, inactiveUser, loginUser, registerUser, updateUser } from '../controller/UserController.js';
-import { authenticate } from '../middleware/authmiddleware.js';
+import { Router } from "express";
+import {
+  registerUser, loginUser, getAllUsers, getSingleUser,
+  approveUser, banUser, updateUserRole, updateMe
+} from "../controller/UserController.js";
+import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 
+const r = Router();
 
-const userRouter = express.Router();
-userRouter.post('/registerUser', registerUser);
-userRouter.post('/loginUser', loginUser);
-userRouter.get('/', getAllUsers);
-userRouter.get('/:id', getSingleUser);
-// ✅ Admin only - approve user
-userRouter.put("/approve/:id", authenticate, approveUser);
-userRouter.put("/inactive/:id",authenticate, inactiveUser);
-userRouter.put('/:id', updateUser);
+r.post("/register", registerUser);
+r.post("/login", loginUser);
 
-export default userRouter;
+r.get("/", authenticate, authorizeRoles("ADMIN"), getAllUsers);
+r.get("/:id", authenticate, authorizeRoles("ADMIN"), getSingleUser);
+
+r.patch("/:id/approve", authenticate, authorizeRoles("ADMIN"), approveUser);
+r.patch("/:id/ban", authenticate, authorizeRoles("ADMIN"), banUser);
+r.patch("/:id/role", authenticate, authorizeRoles("ADMIN"), updateUserRole);
+
+r.patch("/me/update", authenticate, updateMe);
+
+export default r;
