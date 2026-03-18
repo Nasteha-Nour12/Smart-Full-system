@@ -57,10 +57,10 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Enter Your ID"
+            label="Enter Your Email"
             name="identifier"
             type="text"
-            placeholder="Enter Your ID"
+            placeholder="Enter Your Email"
             value={form.identifier}
             onChange={handleChange}
             required
