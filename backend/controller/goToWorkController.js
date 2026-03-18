@@ -38,8 +38,9 @@ export const getMyGoToWork = async (req, res) => {
       .populate("matchedCompanyId", "name location industry status");
 
     if (!gtw) {
-      return res.status(404).json({
-        success: false,
+      return res.json({
+        success: true,
+        data: null,
         message: "No Go To Work request found",
       });
     }

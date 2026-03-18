@@ -21,9 +21,11 @@ import Certificates from "../pages/admin/Certificates";
 
 /* ========= CEO ========= */
 import CEODashboard from "../pages/ceo/Dashboard";
+import CEOReports from "../pages/ceo/Reports";
 
 /* ========= ICT_OFFICER ========= */
 import ICTDashboard from "../pages/ict_officer/Dashboard";
+import ICTOperations from "../pages/ict_officer/Operations";
 
 /* ========= CANDIDATE ========= */
 import CandidateDashboard from "../pages/candidate/CandidateDashboard";
@@ -179,6 +181,16 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/ceo/reports"
+          element={
+            <ProtectedRoute roles={["CEO"]}>
+              <MainLayout>
+                <CEOReports />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* ===== ICT_OFFICER ===== */}
         <Route
@@ -187,6 +199,16 @@ const AppRoutes = () => {
             <ProtectedRoute roles={["ICT_OFFICER"]}>
               <MainLayout>
                 <ICTDashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ict/operations"
+          element={
+            <ProtectedRoute roles={["ICT_OFFICER"]}>
+              <MainLayout>
+                <ICTOperations />
               </MainLayout>
             </ProtectedRoute>
           }

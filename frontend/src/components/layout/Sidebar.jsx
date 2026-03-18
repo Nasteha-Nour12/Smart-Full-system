@@ -31,8 +31,7 @@ const Sidebar = () => {
         {user?.role === "CEO" && (
           <>
             <NavItem to="/ceo" label="Dashboard" />
-            {/* waxaad ku dari kartaa reports pages haddii aad haysato */}
-            {/* <NavItem to="/ceo/reports" label="Reports" /> */}
+            <NavItem to="/ceo/reports" label="Reports" />
           </>
         )}
 
@@ -40,7 +39,7 @@ const Sidebar = () => {
         {user?.role === "ICT_OFFICER" && (
           <>
             <NavItem to="/ict" label="Dashboard" />
-            {/* <NavItem to="/ict/support" label="Support" /> */}
+            <NavItem to="/ict/operations" label="Operations" />
           </>
         )}
 

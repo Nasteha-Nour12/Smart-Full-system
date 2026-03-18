@@ -11,6 +11,7 @@ import opportunityRoutes from "./routes/opportunityRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 import goToWorkRoutes from "./routes/goToWorkRoutes.js";
 import certificateRoutes from "./routes/certificateRoutes.js";
+import insightRoutes from "./routes/insightRoutes.js";
 
 
 
@@ -40,6 +41,7 @@ app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/go-to-work", goToWorkRoutes);
 app.use("/api/certificates", certificateRoutes);
+app.use("/api/insights", insightRoutes);
 // forget password
 
 

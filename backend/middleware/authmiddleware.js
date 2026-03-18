@@ -13,8 +13,14 @@ export const authenticate = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, jwt_secret);
-    // decoded: { _id: "...", role: "admin" | "user", iat, exp }
-    req.user = decoded;
+    const userId = decoded.id || decoded._id || decoded.sub;
+
+    req.user = {
+      ...decoded,
+      id: userId,
+      _id: userId,
+    };
+
     next();
   } catch (err) {
     console.error("JWT verify error:", err);

@@ -1,6 +1,23 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginRequest, registerRequest, logoutRequest } from "../api/auth.api";
 
+const getStoredUser = () => {
+  try {
+    const raw = localStorage.getItem("smart-ses-user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const persistUser = (user) => {
+  if (user) {
+    localStorage.setItem("smart-ses-user", JSON.stringify(user));
+  } else {
+    localStorage.removeItem("smart-ses-user");
+  }
+};
+
 /* ===== REGISTER ===== */
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
@@ -8,10 +25,6 @@ export const registerUser = createAsyncThunk(
     try {
       const res = await registerRequest(data);
 
-      // if backend returns token, save it
-      if (res.token) localStorage.setItem("token", res.token);
-
-      // return user object (support both res.user or res.data.user)
       return res.user || res.data?.user || res.data || res;
     } catch (err) {
       return thunkAPI.rejectWithValue(
@@ -25,9 +38,6 @@ export const registerUser = createAsyncThunk(
 export const login = createAsyncThunk("auth/login", async (data, thunkAPI) => {
   try {
     const res = await loginRequest(data);
-
-    if (res.token) localStorage.setItem("token", res.token);
-
     return res.user || res.data?.user || res.data || res;
   } catch (err) {
     return thunkAPI.rejectWithValue(
@@ -42,16 +52,13 @@ export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
   return true;
 });
 
-/* ===== OPTIONAL LOAD USER =====
-   Haddii aad rabto refresh, 2 doorasho:
-   1) ku dar backend GET /users/me
-   2) ama decode token (haddii token-ku user data ku wato)
-   Hadda waxaan ka dhigay "safe": haddii token jiro, ha dhigin loading true.
-*/
 export const loadUser = createAsyncThunk("auth/loadUser", async (_, thunkAPI) => {
   try {
-    // recommended: add backend GET /users/me then call it here
-    return thunkAPI.rejectWithValue(null);
+    const user = getStoredUser();
+    if (!user) {
+      return thunkAPI.rejectWithValue(null);
+    }
+    return user;
   } catch {
     return thunkAPI.rejectWithValue(null);
   }
@@ -60,8 +67,8 @@ export const loadUser = createAsyncThunk("auth/loadUser", async (_, thunkAPI) =>
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: null,
-    isAuthenticated: false,
+    user: getStoredUser(),
+    isAuthenticated: !!getStoredUser(),
     loading: false,
     error: null,
   },
@@ -71,6 +78,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.loading = false;
+      persistUser(null);
     },
     clearAuthError: (state) => {
       state.error = null;
@@ -87,6 +95,7 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthenticated = true;
         state.loading = false;
+        persistUser(action.payload);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.error = action.payload;
@@ -102,6 +111,7 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthenticated = true;
         state.loading = false;
+        persistUser(action.payload);
       })
       .addCase(login.rejected, (state, action) => {
         state.error = action.payload;
@@ -118,6 +128,8 @@ const authSlice = createSlice({
         state.loading = false;
       })
       .addCase(loadUser.rejected, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
         state.loading = false;
       })
 
@@ -127,6 +139,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
+        persistUser(null);
       });
   },
 });

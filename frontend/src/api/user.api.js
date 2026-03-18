@@ -1,48 +1,31 @@
-// src/api/user.api.jsx
 import api from "./axios";
 
-/**
- * 👤 USER API (Admin only)
- */
-
-// Get all users
-export const getUsers = async () => {
+export const getUsersRequest = async () => {
   const res = await api.get("/users");
   return res.data;
 };
 
-// Get single user by ID
-export const getUserById = async (id) => {
+export const getUserByIdRequest = async (id) => {
   const res = await api.get(`/users/${id}`);
   return res.data;
 };
 
-// Create / register new user (Admin)
-export const createUser = async (data) => {
-  const res = await api.post("/users/register", data);
+export const approveUserRequest = async (id) => {
+  const res = await api.patch(`/users/${id}/approve`);
   return res.data;
 };
 
-// Update user (role / status)
-export const updateUser = async (id, data) => {
-  const res = await api.put(`/users/${id}`, data);
+export const banUserRequest = async (id) => {
+  const res = await api.patch(`/users/${id}/ban`);
   return res.data;
 };
 
-// Delete user
-export const deleteUser = async (id) => {
-  const res = await api.delete(`/users/${id}`);
+export const updateUserRoleRequest = async (id, role) => {
+  const res = await api.patch(`/users/${id}/role`, { role });
   return res.data;
 };
 
-// Link user to Student / Teacher / Parent
-export const linkUser = async (userId, payload) => {
-  const res = await api.post(`/users/${userId}/link`, payload);
-  return res.data;
-};
-
-// Unlink user
-export const unlinkUser = async (userId) => {
-  const res = await api.delete(`/users/${userId}/unlink`);
+export const updateMyProfileRequest = async (data) => {
+  const res = await api.patch("/users/me/update", data);
   return res.data;
 };
