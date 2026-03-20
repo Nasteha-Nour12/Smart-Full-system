@@ -43,18 +43,18 @@ const Sidebar = () => {
           </>
         )}
 
-        {/* ===== CANDIDATE ===== */}
-        {user?.role === "CANDIDATE" && (
+        {/* ===== JOB_SEEKER ===== */}
+        {user?.role === "JOB_SEEKER" && (
           <>
-            <NavItem to="/candidate" label="Dashboard" />
-            <NavItem to="/candidate/profile" label="My Profile" />
-            <NavItem to="/candidate/programs" label="Programs" />
-            <NavItem to="/candidate/enrollments" label="My Enrollments" />
-            <NavItem to="/candidate/opportunities" label="Opportunities" />
-            <NavItem to="/candidate/applications" label="My Applications" />
-            <NavItem to="/candidate/internships" label="Internships" />
-            <NavItem to="/candidate/go-to-work" label="Go To Work" />
-            <NavItem to="/candidate/certificates" label="Certificates" />
+            <NavItem to="/job-seeker" label="Dashboard" />
+            <NavItem to="/job-seeker/profile" label="My Profile" />
+            <NavItem to="/job-seeker/programs" label="Programs" />
+            <NavItem to="/job-seeker/enrollments" label="My Enrollments" />
+            <NavItem to="/job-seeker/opportunities" label="Opportunities" />
+            <NavItem to="/job-seeker/applications" label="My Applications" />
+            <NavItem to="/job-seeker/internships" label="Internships" />
+            <NavItem to="/job-seeker/go-to-work" label="Go To Work" />
+            <NavItem to="/job-seeker/certificates" label="Certificates" />
           </>
         )}
 
@@ -63,9 +63,13 @@ const Sidebar = () => {
           <>
             <NavItem to="/employer" label="Dashboard" />
             <NavItem to="/employer/company" label="Company Profile" />
+            <NavItem to="/employer/programs" label="Programs" />
+            <NavItem to="/employer/enrollments" label="Enrollments" />
             <NavItem to="/employer/opportunities" label="Opportunities" />
             <NavItem to="/employer/applications" label="Applications" />
             <NavItem to="/employer/internships" label="Internships" />
+            <NavItem to="/employer/go-to-work" label="Go To Work" />
+            <NavItem to="/employer/certificates" label="Certificates" />
           </>
         )}
       </nav>

@@ -12,16 +12,16 @@ import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 const router = express.Router();
 
 /* ============================
-   CANDIDATE
+   JOB_SEEKER
 ============================ */
 router.get("/me", authenticate, getMyCertificates);
 
 /* ============================
    ADMIN
 ============================ */
-router.post("/", authenticate, authorizeRoles("ADMIN"), issueCertificate);
-router.get("/", authenticate, authorizeRoles("ADMIN"), getAllCertificates);
-router.get("/:id", authenticate, authorizeRoles("ADMIN"), getCertificateById);
+router.post("/", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), issueCertificate);
+router.get("/", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), getAllCertificates);
+router.get("/:id", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), getCertificateById);
 router.delete("/:id", authenticate, authorizeRoles("ADMIN"), deleteCertificate);
 
 export default router;

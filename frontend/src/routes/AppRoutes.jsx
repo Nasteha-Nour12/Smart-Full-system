@@ -4,6 +4,11 @@ import ProtectedRoute from "../components/layout/ProtectedRoute";
 import AuthLayout from "../components/layout/AuthLayout";
 import MainLayout from "../components/layout/MainLayout";
 
+/* ========= PUBLIC ========= */
+import PublicHome from "../pages/public/Home";
+import PublicPrograms from "../pages/public/Programs";
+import PublicOpportunities from "../pages/public/Opportunities";
+
 /* ========= AUTH ========= */
 import Login from "../pages/auth/Login";
 
@@ -27,7 +32,7 @@ import CEOReports from "../pages/ceo/Reports";
 import ICTDashboard from "../pages/ict_officer/Dashboard";
 import ICTOperations from "../pages/ict_officer/Operations";
 
-/* ========= CANDIDATE ========= */
+/* ========= JOB_SEEKER ========= */
 import CandidateDashboard from "../pages/candidate/CandidateDashboard";
 import CandidateProfile from "../pages/candidate/Profile";
 import CandidatePrograms from "../pages/candidate/Programs";
@@ -41,15 +46,17 @@ import CandidateCertificates from "../pages/candidate/Certificates";
 /* ========= EMPLOYER ========= */
 import EmployerDashboard from "../pages/employer/EmployerDashboard";
 import EmployerCompanyProfile from "../pages/employer/CompanyProfile";
-import EmployerOpportunities from "../pages/employer/Opportunities";
-import EmployerApplications from "../pages/employer/Applications";
-import EmployerInternships from "../pages/employer/Internships";
 import Register from "../pages/auth/Register";
 
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* ===== PUBLIC ===== */}
+        <Route path="/" element={<PublicHome />} />
+        <Route path="/programs" element={<PublicPrograms />} />
+        <Route path="/opportunities" element={<PublicOpportunities />} />
+
         {/* ===== AUTH ===== */}
         <Route
           path="/login"
@@ -214,11 +221,11 @@ const AppRoutes = () => {
           }
         />
 
-        {/* ===== CANDIDATE ===== */}
+        {/* ===== JOB_SEEKER ===== */}
         <Route
-          path="/candidate"
+          path="/job-seeker"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <CandidateDashboard />
               </MainLayout>
@@ -226,9 +233,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/profile"
+          path="/job-seeker/profile"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <CandidateProfile />
               </MainLayout>
@@ -236,9 +243,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/programs"
+          path="/job-seeker/programs"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <CandidatePrograms />
               </MainLayout>
@@ -246,9 +253,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/enrollments"
+          path="/job-seeker/enrollments"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <MyEnrollments />
               </MainLayout>
@@ -256,9 +263,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/opportunities"
+          path="/job-seeker/opportunities"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <CandidateOpportunities />
               </MainLayout>
@@ -266,9 +273,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/applications"
+          path="/job-seeker/applications"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <MyApplications />
               </MainLayout>
@@ -276,9 +283,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/internships"
+          path="/job-seeker/internships"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <CandidateInternships />
               </MainLayout>
@@ -286,9 +293,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/go-to-work"
+          path="/job-seeker/go-to-work"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <CandidateGoToWork />
               </MainLayout>
@@ -296,9 +303,9 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/candidate/certificates"
+          path="/job-seeker/certificates"
           element={
-            <ProtectedRoute roles={["CANDIDATE"]}>
+            <ProtectedRoute roles={["JOB_SEEKER"]}>
               <MainLayout>
                 <CandidateCertificates />
               </MainLayout>
@@ -328,11 +335,31 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="/employer/programs"
+          element={
+            <ProtectedRoute roles={["EMPLOYER"]}>
+              <MainLayout>
+                <Programs />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employer/enrollments"
+          element={
+            <ProtectedRoute roles={["EMPLOYER"]}>
+              <MainLayout>
+                <Enrollments />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/employer/opportunities"
           element={
             <ProtectedRoute roles={["EMPLOYER"]}>
               <MainLayout>
-                <EmployerOpportunities />
+                <Opportunities />
               </MainLayout>
             </ProtectedRoute>
           }
@@ -342,7 +369,7 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute roles={["EMPLOYER"]}>
               <MainLayout>
-                <EmployerApplications />
+                <Applications />
               </MainLayout>
             </ProtectedRoute>
           }
@@ -352,15 +379,34 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute roles={["EMPLOYER"]}>
               <MainLayout>
-                <EmployerInternships />
+                <Internships />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employer/go-to-work"
+          element={
+            <ProtectedRoute roles={["EMPLOYER"]}>
+              <MainLayout>
+                <GoToWork />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employer/certificates"
+          element={
+            <ProtectedRoute roles={["EMPLOYER"]}>
+              <MainLayout>
+                <Certificates />
               </MainLayout>
             </ProtectedRoute>
           }
         />
 
         {/* ===== DEFAULT ===== */}
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );

@@ -7,7 +7,7 @@ export const getMyProfile = async (req, res) => {
   try {
     const profile = await CandidateProfile.findOne({ userId: req.user.id }).populate(
       "userId",
-      "username email role"
+      "fullName email role phone"
     );
 
     if (!profile) {
@@ -153,7 +153,7 @@ export const removeSkill = async (req, res) => {
 export const getAllProfiles = async (req, res) => {
   try {
     const profiles = await CandidateProfile.find()
-      .populate("userId", "username email role")
+      .populate("userId", "fullName email role phone")
       .sort({ createdAt: -1 });
 
     res.json({ success: true, count: profiles.length, data: profiles });
@@ -169,7 +169,7 @@ export const getProfileByUserId = async (req, res) => {
   try {
     const profile = await CandidateProfile.findOne({ userId: req.params.userId }).populate(
       "userId",
-      "username email role"
+      "fullName email role phone"
     );
 
     if (!profile) {

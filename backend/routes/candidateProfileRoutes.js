@@ -15,7 +15,7 @@ import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 const router = express.Router();
 
 /* ============================
-   CANDIDATE (MY PROFILE)
+   JOB_SEEKER (MY PROFILE)
 ============================ */
 router.get("/me", authenticate, getMyProfile);
 router.post("/me", authenticate, upsertMyProfile);   // create or update

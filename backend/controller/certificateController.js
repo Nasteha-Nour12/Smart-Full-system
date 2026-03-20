@@ -32,7 +32,7 @@ export const issueCertificate = async (req, res) => {
 };
 
 /* =======================================================
-   CANDIDATE: GET MY CERTIFICATES
+   JOB_SEEKER: GET MY CERTIFICATES
 ======================================================= */
 export const getMyCertificates = async (req, res) => {
   try {

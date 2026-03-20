@@ -2,7 +2,7 @@ import Application from "../model/Application.js";
 import Opportunity from "../model/Opportunity.js";
 
 /* =======================================================
-   CANDIDATE: APPLY
+   JOB_SEEKER: APPLY
 ======================================================= */
 export const applyOpportunity = async (req, res) => {
   try {
@@ -45,7 +45,7 @@ export const applyOpportunity = async (req, res) => {
 };
 
 /* =======================================================
-   CANDIDATE: GET MY APPLICATIONS
+   JOB_SEEKER: GET MY APPLICATIONS
 ======================================================= */
 export const getMyApplications = async (req, res) => {
   try {
@@ -143,7 +143,7 @@ export const updateApplication = async (req, res) => {
 };
 
 /* =======================================================
-   CANDIDATE: WITHDRAW (delete) - optional
+   JOB_SEEKER: WITHDRAW (delete) - optional
 ======================================================= */
 export const withdrawMyApplication = async (req, res) => {
   try {

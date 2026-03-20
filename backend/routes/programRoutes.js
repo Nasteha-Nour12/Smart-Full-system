@@ -20,12 +20,12 @@ const router = express.Router();
 router.get("/", authenticate, getPrograms);
 router.get("/:id", authenticate, getProgramById);
 
-// admin only create/update/delete
-router.post("/", authenticate, authorizeRoles("ADMIN"), createProgram);
-router.put("/:id", authenticate, authorizeRoles("ADMIN"), updateProgram);
+// admin/employer create-update, admin only delete
+router.post("/", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), createProgram);
+router.put("/:id", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), updateProgram);
 router.delete("/:id", authenticate, authorizeRoles("ADMIN"), deleteProgram);
 
-// admin update status
-router.patch("/:id/status", authenticate, authorizeRoles("ADMIN"), updateProgramStatus);
+// admin/employer update status
+router.patch("/:id/status", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), updateProgramStatus);
 
 export default router;

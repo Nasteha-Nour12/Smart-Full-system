@@ -1,7 +1,7 @@
 import GoToWork from "../model/GoToWork.js";
 
 /* =======================================================
-   CANDIDATE: SUBMIT (create once)
+   JOB_SEEKER: SUBMIT (create once)
 ======================================================= */
 export const submitGoToWork = async (req, res) => {
   try {
@@ -30,7 +30,7 @@ export const submitGoToWork = async (req, res) => {
 };
 
 /* =======================================================
-   CANDIDATE: GET MY REQUEST
+   JOB_SEEKER: GET MY REQUEST
 ======================================================= */
 export const getMyGoToWork = async (req, res) => {
   try {

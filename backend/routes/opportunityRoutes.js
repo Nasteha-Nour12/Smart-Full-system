@@ -21,9 +21,9 @@ router.get("/:id", authenticate, getOpportunityById);
 /* ============================
    ADMIN/EMPLOYER MANAGE
 ============================ */
-router.post("/", authenticate, authorizeRoles("ADMIN"), createOpportunity);
-router.put("/:id", authenticate, authorizeRoles("ADMIN"), updateOpportunity);
+router.post("/", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), createOpportunity);
+router.put("/:id", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), updateOpportunity);
 router.delete("/:id", authenticate, authorizeRoles("ADMIN"), deleteOpportunity);
-router.patch("/:id/status", authenticate, authorizeRoles("ADMIN"), updateOpportunityStatus);
+router.patch("/:id/status", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), updateOpportunityStatus);
 
 export default router;

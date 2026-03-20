@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import FileUploadField from "../../components/common/FileUploadField";
 import PageTitle from "../../components/common/PageTitle";
 import Loader from "../../components/ui/Loader";
 import Button from "../../components/ui/Button";
@@ -191,11 +192,14 @@ const Internships = () => {
               value={form.evaluationScore}
               onChange={(event) => setForm((prev) => ({ ...prev, evaluationScore: event.target.value }))}
             />
-            <Input
-              label="Recommendation Letter URL"
+            <FileUploadField
+              label="Recommendation Letter"
               value={form.recommendationLetterUrl}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, recommendationLetterUrl: event.target.value }))
+              accept=".pdf,.doc,.docx,image/*"
+              buttonLabel="Upload Letter"
+              helperText="Upload recommendation ama completion letter"
+              onUploaded={(url) =>
+                setForm((prev) => ({ ...prev, recommendationLetterUrl: url }))
               }
             />
             <div className="flex justify-end">

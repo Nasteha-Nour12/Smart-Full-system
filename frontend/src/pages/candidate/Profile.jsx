@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 import PageTitle from "../../components/common/PageTitle";
+import FileUploadField from "../../components/common/FileUploadField";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Loader from "../../components/ui/Loader";
@@ -12,6 +14,8 @@ import {
 } from "../../api/candidateProfiles.api";
 import { updateMyProfileRequest } from "../../api/user.api";
 import { getErrorMessage } from "../../utils/formatters";
+import { loadUser } from "../../app/authSlice";
+import useAuth from "../../hooks/useAuth";
 
 const emptyProfile = {
   location: "",
@@ -23,12 +27,12 @@ const emptyProfile = {
 };
 
 const Profile = () => {
+  const dispatch = useDispatch();
+  const { logout } = useAuth();
   const { user } = useSelector((state) => state.auth);
   const [userForm, setUserForm] = useState({
     fullName: user?.fullName || "",
     phone: user?.phone || "",
-    oldPassword: "",
-    newPassword: "",
   });
   const [profileForm, setProfileForm] = useState(emptyProfile);
   const [skillForm, setSkillForm] = useState({ name: "", level: "BEGINNER" });
@@ -36,6 +40,23 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setUserForm((prev) => ({
+      ...prev,
+      fullName: user?.fullName || "",
+      phone: user?.phone || "",
+    }));
+  }, [user]);
+
+  const profileCompletion = [
+    profileForm.location,
+    profileForm.education,
+    profileForm.bio,
+    profileForm.cvUrl,
+    profileForm.idUrl,
+    skills.length > 0 ? "skills" : "",
+  ].filter(Boolean).length;
 
   const loadProfile = async () => {
     try {
@@ -74,8 +95,6 @@ const Profile = () => {
         updateMyProfileRequest({
           fullName: userForm.fullName,
           phone: userForm.phone,
-          oldPassword: userForm.oldPassword || undefined,
-          newPassword: userForm.newPassword || undefined,
         }),
       ]);
 
@@ -85,7 +104,7 @@ const Profile = () => {
         phone: userForm.phone,
       };
       localStorage.setItem("smart-ses-user", JSON.stringify(updatedStoredUser));
-      setUserForm((prev) => ({ ...prev, oldPassword: "", newPassword: "" }));
+      dispatch(loadUser());
       await loadProfile();
       alert("Profile updated successfully");
     } catch (err) {
@@ -97,6 +116,7 @@ const Profile = () => {
 
   const handleAddSkill = async () => {
     try {
+      await saveMyCandidateProfileRequest(profileForm);
       await addSkillRequest(skillForm);
       setSkillForm({ name: "", level: "BEGINNER" });
       await loadProfile();
@@ -119,6 +139,24 @@ const Profile = () => {
       <PageTitle title="My Profile" subtitle="Keep your candidate profile complete and up to date" />
       {loading ? <Loader /> : null}
       {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+
+      <div className="mb-6 rounded-xl bg-gradient-to-r from-slate-900 to-slate-700 p-5 text-white shadow">
+        <p className="text-sm text-slate-200">Profile Completion</p>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <div className="h-3 overflow-hidden rounded-full bg-white/20">
+              <div
+                className="h-full rounded-full bg-emerald-400 transition-all"
+                style={{ width: `${(profileCompletion / 6) * 100}%` }}
+              />
+            </div>
+          </div>
+          <p className="text-lg font-semibold">{Math.round((profileCompletion / 6) * 100)}%</p>
+        </div>
+        <p className="mt-2 text-sm text-slate-200">
+          Buuxi xogtaada iyo ugu yaraan hal skill si profile-kaagu u noqdo mid diyaar u ah fursadaha.
+        </p>
+      </div>
 
       <form onSubmit={handleSaveProfile} className="grid gap-6 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6 rounded-xl bg-white p-6 shadow">
@@ -176,30 +214,21 @@ const Profile = () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="CV URL"
+            <FileUploadField
+              label="CV Upload"
               value={profileForm.cvUrl}
-              onChange={(event) => setProfileForm((prev) => ({ ...prev, cvUrl: event.target.value }))}
+              accept=".pdf,.doc,.docx,image/*"
+              buttonLabel="Upload CV"
+              helperText="PDF, DOC, DOCX, ama image"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, cvUrl: url }))}
             />
-            <Input
-              label="ID URL"
+            <FileUploadField
+              label="ID Upload"
               value={profileForm.idUrl}
-              onChange={(event) => setProfileForm((prev) => ({ ...prev, idUrl: event.target.value }))}
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Old Password"
-              type="password"
-              value={userForm.oldPassword}
-              onChange={(event) => setUserForm((prev) => ({ ...prev, oldPassword: event.target.value }))}
-            />
-            <Input
-              label="New Password"
-              type="password"
-              value={userForm.newPassword}
-              onChange={(event) => setUserForm((prev) => ({ ...prev, newPassword: event.target.value }))}
+              accept=".pdf,image/*"
+              buttonLabel="Upload ID"
+              helperText="National ID, passport, ama PDF"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, idUrl: url }))}
             />
           </div>
 
@@ -211,7 +240,17 @@ const Profile = () => {
         </div>
 
         <div className="space-y-4 rounded-xl bg-white p-6 shadow">
-          <h3 className="text-lg font-semibold text-slate-900">Skills</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Account Actions</h3>
+          <p className="text-sm text-slate-500">
+            Halkan waxaad ka bixi kartaa account-kaaga. Password change hadda waan ka saarnay section-kan.
+          </p>
+          <Button type="button" variant="danger" className="w-full" onClick={logout}>
+            Logout
+          </Button>
+
+          <div className="border-t pt-4">
+            <h4 className="text-lg font-semibold text-slate-900">Skills</h4>
+          </div>
           <Input
             label="Skill Name"
             value={skillForm.name}

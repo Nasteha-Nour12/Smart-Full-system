@@ -44,8 +44,8 @@ const Register = () => {
         return <Navigate to="/ceo" replace />;
       case "ICT_OFFICER":
         return <Navigate to="/ict" replace />;
-      case "CANDIDATE":
-        return <Navigate to="/candidate" replace />;
+      case "JOB_SEEKER":
+        return <Navigate to="/job-seeker" replace />;
       case "EMPLOYER":
         return <Navigate to="/employer" replace />;
       default:

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import FileUploadField from "../../components/common/FileUploadField";
 import PageTitle from "../../components/common/PageTitle";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -22,6 +24,7 @@ const emptyForm = {
 };
 
 const Certificates = () => {
+  const { user } = useSelector((state) => state.auth);
   const [certificates, setCertificates] = useState([]);
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -41,7 +44,7 @@ const Certificates = () => {
         getUsersRequest(),
       ]);
       setCertificates(certificateRes.data || []);
-      setUsers((usersRes.data || []).filter((user) => user.role === "CANDIDATE"));
+      setUsers((usersRes.data || []).filter((user) => user.role === "JOB_SEEKER"));
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load certificates"));
     } finally {
@@ -130,15 +133,19 @@ const Certificates = () => {
                     </a>
                   </td>
                   <td className="p-3 text-right">
-                    <Button
-                      variant="danger"
-                      onClick={() => {
-                        setSelected(certificate);
-                        setConfirmOpen(true);
-                      }}
-                    >
-                      Delete
-                    </Button>
+                    {user?.role === "ADMIN" ? (
+                      <Button
+                        variant="danger"
+                        onClick={() => {
+                          setSelected(certificate);
+                          setConfirmOpen(true);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-slate-400">No delete permission</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -164,7 +171,7 @@ const Certificates = () => {
               onChange={(event) => setForm((prev) => ({ ...prev, candidateId: event.target.value }))}
               required
             >
-              <option value="">Select candidate</option>
+              <option value="">Select job seeker</option>
               {users.map((user) => (
                 <option key={user._id} value={user._id}>
                   {user.fullName}
@@ -191,11 +198,13 @@ const Certificates = () => {
               required
             />
           </div>
-          <Input
-            label="Certificate URL"
+          <FileUploadField
+            label="Certificate File"
             value={form.certificateUrl}
-            onChange={(event) => setForm((prev) => ({ ...prev, certificateUrl: event.target.value }))}
-            required
+            accept=".pdf,image/*"
+            buttonLabel="Upload Certificate"
+            helperText="Upload certificate PDF ama image"
+            onUploaded={(url) => setForm((prev) => ({ ...prev, certificateUrl: url }))}
           />
           <Input
             label="Issued At"
@@ -211,14 +220,16 @@ const Certificates = () => {
         </form>
       </Modal>
 
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Delete Certificate"
-        message="Are you sure you want to delete this certificate?"
-        onCancel={() => setConfirmOpen(false)}
-        onConfirm={handleDelete}
-        loading={saving}
-      />
+      {user?.role === "ADMIN" ? (
+        <ConfirmDialog
+          open={confirmOpen}
+          title="Delete Certificate"
+          message="Are you sure you want to delete this certificate?"
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={handleDelete}
+          loading={saving}
+        />
+      ) : null}
     </div>
   );
 };

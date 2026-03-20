@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import FileUploadField from "../../components/common/FileUploadField";
 import PageTitle from "../../components/common/PageTitle";
 import Loader from "../../components/ui/Loader";
 import Button from "../../components/ui/Button";
@@ -188,10 +189,13 @@ const GoToWork = () => {
               value={form.interviewDate}
               onChange={(event) => setForm((prev) => ({ ...prev, interviewDate: event.target.value }))}
             />
-            <Input
-              label="Contract URL"
+            <FileUploadField
+              label="Contract File"
               value={form.contractUrl}
-              onChange={(event) => setForm((prev) => ({ ...prev, contractUrl: event.target.value }))}
+              accept=".pdf,.doc,.docx,image/*"
+              buttonLabel="Upload Contract"
+              helperText="Upload signed contract ama offer letter"
+              onUploaded={(url) => setForm((prev) => ({ ...prev, contractUrl: url }))}
             />
             <div>
               <label className="mb-1 block text-sm font-medium">Notes</label>

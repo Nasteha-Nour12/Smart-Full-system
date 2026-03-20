@@ -26,8 +26,8 @@ const Navbar = () => {
       case "ICT_OFFICER":
         navigate("/ict");
         break;
-      case "CANDIDATE":
-        navigate("/candidate");
+      case "JOB_SEEKER":
+        navigate("/job-seeker");
         break;
       case "EMPLOYER":
         navigate("/employer");

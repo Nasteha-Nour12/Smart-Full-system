@@ -1,22 +1,36 @@
 import { useEffect, useState } from "react";
 import PageTitle from "../../components/common/PageTitle";
+import Input from "../../components/ui/Input";
 import Loader from "../../components/ui/Loader";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import {
   approveUserRequest,
   banUserRequest,
+  createAdminUserRequest,
   getUserByIdRequest,
   getUsersRequest,
   updateUserRoleRequest,
 } from "../../api/user.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 
-const roleOptions = ["ADMIN", "CEO", "ICT_OFFICER", "CANDIDATE", "EMPLOYER"];
+const roleOptions = ["ADMIN", "CEO", "ICT_OFFICER", "JOB_SEEKER", "EMPLOYER"];
+const creatableRoleOptions = ["ADMIN", "CEO", "ICT_OFFICER", "EMPLOYER"];
+
+const emptyCreateForm = {
+  fullName: "",
+  email: "",
+  phone: "",
+  password: "",
+  role: "EMPLOYER",
+  status: "ACTIVE",
+};
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [createForm, setCreateForm] = useState(emptyCreateForm);
+  const [createOpen, setCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -92,9 +106,30 @@ const Users = () => {
     }
   };
 
+  const handleCreateUser = async (event) => {
+    event.preventDefault();
+    try {
+      setSaving(true);
+      await createAdminUserRequest({
+        ...createForm,
+        email: createForm.email.trim(),
+        phone: createForm.phone.trim(),
+      });
+      setCreateForm(emptyCreateForm);
+      setCreateOpen(false);
+      await loadUsers();
+    } catch (err) {
+      alert(getErrorMessage(err, "Failed to create user"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
-      <PageTitle title="Users" subtitle="Approve accounts, assign roles, and manage status" />
+      <PageTitle title="Users" subtitle="Approve accounts, assign roles, and manage status">
+        <Button onClick={() => setCreateOpen(true)}>Create Staff User</Button>
+      </PageTitle>
 
       {loading ? <Loader /> : null}
       {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
@@ -214,6 +249,87 @@ const Users = () => {
             </div>
           </div>
         ) : null}
+      </Modal>
+
+      <Modal
+        open={createOpen}
+        title="Create Admin / Staff User"
+        onClose={() => setCreateOpen(false)}
+        footer={null}
+      >
+        <form onSubmit={handleCreateUser} className="space-y-4">
+          <Input
+            label="Full Name"
+            value={createForm.fullName}
+            onChange={(event) =>
+              setCreateForm((prev) => ({ ...prev, fullName: event.target.value }))
+            }
+            required
+          />
+          <div className="grid gap-3 md:grid-cols-2">
+            <Input
+              label="Email"
+              type="email"
+              value={createForm.email}
+              onChange={(event) =>
+                setCreateForm((prev) => ({ ...prev, email: event.target.value }))
+              }
+            />
+            <Input
+              label="Phone"
+              value={createForm.phone}
+              onChange={(event) =>
+                setCreateForm((prev) => ({ ...prev, phone: event.target.value }))
+              }
+            />
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Input
+              label="Password"
+              type="password"
+              value={createForm.password}
+              onChange={(event) =>
+                setCreateForm((prev) => ({ ...prev, password: event.target.value }))
+              }
+              required
+            />
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Role</label>
+              <select
+                className="w-full rounded border border-slate-300 px-3 py-2"
+                value={createForm.role}
+                onChange={(event) =>
+                  setCreateForm((prev) => ({ ...prev, role: event.target.value }))
+                }
+              >
+                {creatableRoleOptions.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Status</label>
+            <select
+              className="w-full rounded border border-slate-300 px-3 py-2"
+              value={createForm.status}
+              onChange={(event) =>
+                setCreateForm((prev) => ({ ...prev, status: event.target.value }))
+              }
+            >
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="PENDING">PENDING</option>
+              <option value="BANNED">BANNED</option>
+            </select>
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" loading={saving}>
+              Create User
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

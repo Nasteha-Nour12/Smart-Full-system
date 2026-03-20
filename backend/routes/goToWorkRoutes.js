@@ -13,7 +13,7 @@ import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 const router = express.Router();
 
 /* ============================
-   CANDIDATE
+   JOB_SEEKER
 ============================ */
 router.post("/", authenticate, submitGoToWork);
 router.get("/me", authenticate, getMyGoToWork);
@@ -21,9 +21,9 @@ router.get("/me", authenticate, getMyGoToWork);
 /* ============================
    ADMIN
 ============================ */
-router.get("/", authenticate, authorizeRoles("ADMIN"), getAllGoToWork);
-router.get("/:id", authenticate, authorizeRoles("ADMIN"), getGoToWorkById);
-router.put("/:id", authenticate, authorizeRoles("ADMIN"), updateGoToWork);
-router.patch("/:id/status", authenticate, authorizeRoles("ADMIN"), updateGoToWorkStatus);
+router.get("/", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), getAllGoToWork);
+router.get("/:id", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), getGoToWorkById);
+router.put("/:id", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), updateGoToWork);
+router.patch("/:id/status", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), updateGoToWorkStatus);
 
 export default router;

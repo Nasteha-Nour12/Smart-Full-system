@@ -35,8 +35,8 @@ const Login = () => {
         return <Navigate to="/ceo" replace />;
       case "ICT_OFFICER":
         return <Navigate to="/ict" replace />; // ✅ sax
-      case "CANDIDATE":
-        return <Navigate to="/candidate" replace />;
+      case "JOB_SEEKER":
+        return <Navigate to="/job-seeker" replace />;
       case "EMPLOYER":
         return <Navigate to="/employer" replace />;
       default:

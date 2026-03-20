@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import PageTitle from "../../components/common/PageTitle";
 import Loader from "../../components/ui/Loader";
 import Button from "../../components/ui/Button";
-import { enrollProgramRequest } from "../../api/enrollments.api";
+import { enrollProgramRequest, getMyEnrollmentsRequest } from "../../api/enrollments.api";
 import { getProgramsRequest } from "../../api/programs.api";
 import { formatCurrency, formatDate, getErrorMessage } from "../../utils/formatters";
 
 const Programs = () => {
   const [programs, setPrograms] = useState([]);
+  const [enrolledProgramIds, setEnrolledProgramIds] = useState([]);
+  const [submittingId, setSubmittingId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -15,8 +17,14 @@ const Programs = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await getProgramsRequest({ status: "OPEN" });
-      setPrograms(res.data || []);
+      const [programsRes, enrollmentsRes] = await Promise.all([
+        getProgramsRequest({ status: "OPEN" }),
+        getMyEnrollmentsRequest(),
+      ]);
+      setPrograms(programsRes.data || []);
+      setEnrolledProgramIds(
+        (enrollmentsRes.data || []).map((item) => item.programId?._id).filter(Boolean)
+      );
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load programs"));
     } finally {
@@ -30,11 +38,14 @@ const Programs = () => {
 
   const handleEnroll = async (programId) => {
     try {
+      setSubmittingId(programId);
       await enrollProgramRequest(programId);
       alert("Enrollment submitted successfully");
       await loadPrograms();
     } catch (err) {
       alert(getErrorMessage(err, "Failed to enroll"));
+    } finally {
+      setSubmittingId("");
     }
   };
 
@@ -56,8 +67,13 @@ const Programs = () => {
               <p>Seats: {program.seats}</p>
               <p>Fee: {formatCurrency(program.fee)}</p>
             </div>
-            <Button className="mt-4 w-full" onClick={() => handleEnroll(program._id)}>
-              Enroll Now
+            <Button
+              className="mt-4 w-full"
+              onClick={() => handleEnroll(program._id)}
+              disabled={enrolledProgramIds.includes(program._id) || submittingId === program._id}
+              loading={submittingId === program._id}
+            >
+              {enrolledProgramIds.includes(program._id) ? "Already Requested" : "Enroll Now"}
             </Button>
           </div>
         ))}

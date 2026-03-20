@@ -1,7 +1,7 @@
 import Internship from "../model/Internship.js";
 
 /* =======================================================
-   CANDIDATE: REQUEST INTERNSHIP (create PENDING)
+   JOB_SEEKER: REQUEST INTERNSHIP (create PENDING)
 ======================================================= */
 export const requestInternship = async (req, res) => {
   try {
@@ -27,7 +27,7 @@ export const requestInternship = async (req, res) => {
 };
 
 /* =======================================================
-   CANDIDATE: GET MY INTERNSHIPS
+   JOB_SEEKER: GET MY INTERNSHIPS
 ======================================================= */
 export const getMyInternships = async (req, res) => {
   try {
@@ -133,7 +133,7 @@ export const updateInternshipStatus = async (req, res) => {
 };
 
 /* =======================================================
-   CANDIDATE: CANCEL MY REQUEST (only if PENDING/ACTIVE)
+   JOB_SEEKER: CANCEL MY REQUEST (only if PENDING/ACTIVE)
 ======================================================= */
 export const cancelMyInternship = async (req, res) => {
   try {

@@ -84,7 +84,7 @@ const Applications = () => {
                 <tr key={application._id} className="border-t">
                   <td className="p-3">
                     <p className="font-medium">
-                      {application.candidateId?.username || application.candidateId?.fullName || "-"}
+                      {application.candidateId?.fullName || application.candidateId?.fullName || "unknown"}
                     </p>
                     <p className="text-xs text-slate-500">{application.candidateId?.email || "-"}</p>
                   </td>

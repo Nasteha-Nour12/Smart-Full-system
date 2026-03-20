@@ -22,8 +22,8 @@ const useAuth = () => {
       case "ICT_OFFICER":
         navigate("/ict");
         break;
-      case "CANDIDATE":
-        navigate("/candidate");
+      case "JOB_SEEKER":
+        navigate("/job-seeker");
         break;
       case "EMPLOYER":
         navigate("/employer");
@@ -50,7 +50,7 @@ const useAuth = () => {
     const res = await dispatch(registerUser(data));
 
     if (res.meta.requestStatus === "fulfilled") {
-      const role = res.payload?.role || res.payload?.user?.role || "CANDIDATE";
+      const role = res.payload?.role || res.payload?.user?.role || "JOB_SEEKER";
       goByRole(role);
     }
     return res;

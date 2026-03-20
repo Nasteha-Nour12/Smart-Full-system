@@ -5,6 +5,11 @@ export const getUsersRequest = async () => {
   return res.data;
 };
 
+export const createAdminUserRequest = async (data) => {
+  const res = await api.post("/users/admin-create", data);
+  return res.data;
+};
+
 export const getUserByIdRequest = async (id) => {
   const res = await api.get(`/users/${id}`);
   return res.data;

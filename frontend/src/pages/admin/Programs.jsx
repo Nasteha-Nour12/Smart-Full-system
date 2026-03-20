@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import PageTitle from "../../components/common/PageTitle";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -26,6 +27,7 @@ const emptyForm = {
 };
 
 const Programs = () => {
+  const { user } = useSelector((state) => state.auth);
   const [programs, setPrograms] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
@@ -174,15 +176,17 @@ const Programs = () => {
                           {status}
                         </Button>
                       ))}
-                      <Button
-                        variant="danger"
-                        onClick={() => {
-                          setSelected(program);
-                          setConfirmOpen(true);
-                        }}
-                      >
-                        Delete
-                      </Button>
+                      {user?.role === "ADMIN" ? (
+                        <Button
+                          variant="danger"
+                          onClick={() => {
+                            setSelected(program);
+                            setConfirmOpen(true);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -288,14 +292,16 @@ const Programs = () => {
         </form>
       </Modal>
 
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Delete Program"
-        message={`Delete "${selected?.title}"?`}
-        onCancel={() => setConfirmOpen(false)}
-        onConfirm={handleDelete}
-        loading={saving}
-      />
+      {user?.role === "ADMIN" ? (
+        <ConfirmDialog
+          open={confirmOpen}
+          title="Delete Program"
+          message={`Delete "${selected?.title}"?`}
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={handleDelete}
+          loading={saving}
+        />
+      ) : null}
     </div>
   );
 };

@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import PageTitle from "../../components/common/PageTitle";
 import Loader from "../../components/ui/Loader";
 import Button from "../../components/ui/Button";
-import { applyOpportunityRequest } from "../../api/applications.api";
+import { applyOpportunityRequest, getMyApplicationsRequest } from "../../api/applications.api";
 import { getOpportunitiesRequest } from "../../api/opportunities.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 
 const Opportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
+  const [appliedOpportunityIds, setAppliedOpportunityIds] = useState([]);
+  const [submittingId, setSubmittingId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -15,8 +17,14 @@ const Opportunities = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await getOpportunitiesRequest({ status: "PUBLISHED" });
-      setOpportunities(res.data || []);
+      const [opportunitiesRes, applicationsRes] = await Promise.all([
+        getOpportunitiesRequest({ status: "PUBLISHED" }),
+        getMyApplicationsRequest(),
+      ]);
+      setOpportunities(opportunitiesRes.data || []);
+      setAppliedOpportunityIds(
+        (applicationsRes.data || []).map((item) => item.opportunityId?._id).filter(Boolean)
+      );
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load opportunities"));
     } finally {
@@ -30,10 +38,14 @@ const Opportunities = () => {
 
   const handleApply = async (opportunityId) => {
     try {
+      setSubmittingId(opportunityId);
       await applyOpportunityRequest(opportunityId);
       alert("Application submitted successfully");
+      await loadOpportunities();
     } catch (err) {
       alert(getErrorMessage(err, "Failed to apply"));
+    } finally {
+      setSubmittingId("");
     }
   };
 
@@ -63,8 +75,13 @@ const Opportunities = () => {
               <p className="text-sm font-medium text-slate-700">Requirements</p>
               <p className="text-sm text-slate-600">{opportunity.requirements || "No requirements provided"}</p>
             </div>
-            <Button className="mt-4 w-full" onClick={() => handleApply(opportunity._id)}>
-              Apply Now
+            <Button
+              className="mt-4 w-full"
+              onClick={() => handleApply(opportunity._id)}
+              disabled={appliedOpportunityIds.includes(opportunity._id) || submittingId === opportunity._id}
+              loading={submittingId === opportunity._id}
+            >
+              {appliedOpportunityIds.includes(opportunity._id) ? "Already Applied" : "Apply Now"}
             </Button>
           </div>
         ))}

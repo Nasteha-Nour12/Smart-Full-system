@@ -36,7 +36,7 @@ export const registerUser = async (req, res) => {
       email: email?.toLowerCase(),
       phone,
       passwordHash: password, // pre-save will hash it
-      role: "CANDIDATE",
+      role: "JOB_SEEKER",
       status: "PENDING",
     });
 
@@ -46,6 +46,60 @@ export const registerUser = async (req, res) => {
     });
   } catch (e) {
     return res.status(500).json({ message: "Register error", error: e.message });
+  }
+};
+
+export const createUserByAdmin = async (req, res) => {
+  try {
+    const schema = z.object({
+      fullName: z.string().min(2),
+      email: z.string().email().optional(),
+      phone: z.string().min(6).optional(),
+      password: z.string().min(6),
+      role: z.enum(["ADMIN", "CEO", "ICT_OFFICER", "EMPLOYER"]),
+      status: z.enum(["ACTIVE", "PENDING", "BANNED"]).optional(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error.flatten());
+
+    const { fullName, email, phone, password, role, status } = parsed.data;
+    if (!email && !phone) {
+      return res.status(400).json({ message: "Email ama Phone waa qasab." });
+    }
+
+    const exists = await User.findOne({
+      $or: [email ? { email: email.toLowerCase() } : null, phone ? { phone } : null].filter(Boolean),
+    });
+
+    if (exists) {
+      return res.status(409).json({ message: "User horey ayuu u jiraa." });
+    }
+
+    const user = await User.create({
+      fullName,
+      email: email?.toLowerCase(),
+      phone,
+      passwordHash: password,
+      role,
+      status: status || "ACTIVE",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        status: user.status,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (e) {
+    return res.status(500).json({ message: "Create user error", error: e.message });
   }
 };
 
@@ -128,7 +182,7 @@ export const banUser = async (req, res) => {
 
 // Admin: update role
 export const updateUserRole = async (req, res) => {
-  const schema = z.object({ role: z.enum(["ADMIN", "CEO", "ICT_OFFICER", "CANDIDATE", "EMPLOYER"]) });
+  const schema = z.object({ role: z.enum(["ADMIN", "CEO", "ICT_OFFICER", "JOB_SEEKER", "EMPLOYER"]) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 

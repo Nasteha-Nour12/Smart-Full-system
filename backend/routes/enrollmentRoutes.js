@@ -12,7 +12,7 @@ import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 const router = express.Router();
 
 /* ============================
-   CANDIDATE ROUTES
+   JOB_SEEKER ROUTES
 ============================ */
 router.post("/", authenticate, enrollProgram);
 router.get("/me", authenticate, getMyEnrollments);
@@ -21,7 +21,7 @@ router.patch("/drop/:id", authenticate, dropEnrollment);
 /* ============================
    ADMIN ROUTES
 ============================ */
-router.get("/", authenticate, authorizeRoles("ADMIN"), getAllEnrollments);
-router.put("/:id", authenticate, authorizeRoles("ADMIN"), updateEnrollment);
+router.get("/", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), getAllEnrollments);
+router.put("/:id", authenticate, authorizeRoles("ADMIN", "EMPLOYER"), updateEnrollment);
 
 export default router;
