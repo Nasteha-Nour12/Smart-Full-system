@@ -24,3 +24,29 @@ export const removeSkillRequest = async (skillId) => {
   const res = await api.delete(`/candidate-profiles/me/skills/${skillId}`);
   return res.data;
 };
+
+// Admin endpoints
+export const getAllCandidateProfilesRequest = async (params = {}) => {
+  const res = await api.get("/candidate-profiles", { params });
+  return res.data;
+};
+
+export const getCandidateProfileByUserIdRequest = async (userId) => {
+  const res = await api.get(`/candidate-profiles/${userId}`);
+  return res.data;
+};
+
+export const deleteCandidateProfileByUserIdRequest = async (userId) => {
+  const res = await api.delete(`/candidate-profiles/${userId}`);
+  return res.data;
+};
+
+export const upsertCandidateProfileByAdminRequest = async (data) => {
+  const res = await api.post("/candidate-profiles/admin-upsert", data);
+  return res.data;
+};
+
+export const importCandidateProfilesRequest = async (rows) => {
+  const res = await api.post("/candidate-profiles/import", { rows });
+  return res.data;
+};

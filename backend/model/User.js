@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-const ROLES = ["ADMIN", "CEO", "ICT_OFFICER", "JOB_SEEKER", "EMPLOYER"];
+const ROLES = ["ADMIN", "JOB_SEEKER", "EMPLOYER", "INTERNSHIP_EMPLOYER", "CEO", "ICT_OFFICER"];
 const STATUS = ["ACTIVE", "PENDING", "BANNED"];
 
 const userSchema = new mongoose.Schema(
@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, lowercase: true, unique: true, sparse: true, trim: true },
     phone: { type: String, unique: true, sparse: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
-    role: { type: String, enum: ROLES, default: "JOB_SEEKER" },
+    role: { type: String, enum: ROLES, default: "ADMIN" },
     status: { type: String, enum: STATUS, default: "PENDING" },
     resetPasswordTokenHash: { type: String, select: false },
     resetPasswordExpiresAt: { type: Date, select: false },

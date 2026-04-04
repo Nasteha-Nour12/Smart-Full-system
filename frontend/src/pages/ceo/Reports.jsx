@@ -37,9 +37,9 @@ const Reports = () => {
             <h2 className="text-lg font-semibold text-slate-900">Portfolio Mix</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div className="rounded-lg bg-slate-50 p-4">
-                <p className="text-sm font-medium text-slate-700">Programs by Type</p>
+                <p className="text-sm font-medium text-slate-700">Internships by Status</p>
                 <div className="mt-3 space-y-2 text-sm text-slate-600">
-                  {Object.entries(executive.breakdowns.programTypes || {}).map(([key, value]) => (
+                  {Object.entries(executive.breakdowns.internshipStatuses || {}).map(([key, value]) => (
                     <div key={key} className="flex items-center justify-between">
                       <span>{key}</span>
                       <span className="font-semibold text-slate-900">{value}</span>
@@ -48,9 +48,9 @@ const Reports = () => {
                 </div>
               </div>
               <div className="rounded-lg bg-slate-50 p-4">
-                <p className="text-sm font-medium text-slate-700">Opportunities by Type</p>
+                <p className="text-sm font-medium text-slate-700">Go To Work by Status</p>
                 <div className="mt-3 space-y-2 text-sm text-slate-600">
-                  {Object.entries(executive.breakdowns.opportunityTypes || {}).map(([key, value]) => (
+                  {Object.entries(executive.breakdowns.goToWorkStatuses || {}).map(([key, value]) => (
                     <div key={key} className="flex items-center justify-between">
                       <span>{key}</span>
                       <span className="font-semibold text-slate-900">{value}</span>
@@ -68,7 +68,7 @@ const Reports = () => {
                   {executive.recent.users.map((user) => (
                     <div key={user._id} className="text-sm">
                       <p className="font-medium text-slate-900">{user.fullName}</p>
-                      <p className="text-slate-500">{user.role} • {user.status}</p>
+                      <p className="text-slate-500">{user.role} - {user.status}</p>
                     </div>
                   ))}
                 </div>
@@ -79,18 +79,18 @@ const Reports = () => {
                   {executive.recent.companies.map((company) => (
                     <div key={company._id} className="text-sm">
                       <p className="font-medium text-slate-900">{company.name}</p>
-                      <p className="text-slate-500">{company.industry} • {company.status}</p>
+                      <p className="text-slate-500">{company.industry} - {company.status}</p>
                     </div>
                   ))}
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 p-4">
-                <p className="text-sm font-medium text-slate-700">Latest Opportunities</p>
+                <p className="text-sm font-medium text-slate-700">Latest Internships</p>
                 <div className="mt-3 space-y-3">
-                  {executive.recent.opportunities.map((item) => (
+                  {executive.recent.internships.map((item) => (
                     <div key={item._id} className="text-sm">
-                      <p className="font-medium text-slate-900">{item.title}</p>
-                      <p className="text-slate-500">{item.companyId?.name || "-"} • {item.status}</p>
+                      <p className="font-medium text-slate-900">{item.position}</p>
+                      <p className="text-slate-500">{item.companyId?.name || "-"} - {item.status}</p>
                     </div>
                   ))}
                 </div>

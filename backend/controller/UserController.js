@@ -2,11 +2,12 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { z } from "zod";
 import User from "../model/User.js";
+import { jwt_secret } from "../config/config.js";
 
 const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 const signToken = (user) =>
-  jwt.sign({ sub: user._id.toString(), role: user.role }, process.env.JWT_SECRET, {
+  jwt.sign({ sub: user._id.toString(), role: user.role }, jwt_secret, {
     expiresIn: "7d",
   });
 
@@ -36,12 +37,12 @@ export const registerUser = async (req, res) => {
       email: email?.toLowerCase(),
       phone,
       passwordHash: password, // pre-save will hash it
-      role: "JOB_SEEKER",
-      status: "PENDING",
+      role: "ADMIN",
+      status: "ACTIVE",
     });
 
     return res.status(201).json({
-      message: "Registered. Admin approval required.",
+      message: "Registered successfully.",
       user: { id: user._id, fullName: user.fullName, role: user.role, status: user.status },
     });
   } catch (e) {
@@ -56,7 +57,7 @@ export const createUserByAdmin = async (req, res) => {
       email: z.string().email().optional(),
       phone: z.string().min(6).optional(),
       password: z.string().min(6),
-      role: z.enum(["ADMIN", "CEO", "ICT_OFFICER", "EMPLOYER"]),
+      role: z.enum(["ADMIN"]),
       status: z.enum(["ACTIVE", "PENDING", "BANNED"]).optional(),
     });
 
@@ -148,7 +149,10 @@ export const loginUser = async (req, res) => {
 };
 
 export const getAllUsers = async (_req, res) => {
-  const users = await User.find().select("-passwordHash -resetPasswordTokenHash -resetPasswordExpiresAt");
+  const users = await User.find({
+    role: "ADMIN",
+    email: { $not: /^candidate\..+@smartses\.local$/i },
+  }).select("-passwordHash -resetPasswordTokenHash -resetPasswordExpiresAt");
   res.json({ success: true, data: users });
 };
 
@@ -182,7 +186,7 @@ export const banUser = async (req, res) => {
 
 // Admin: update role
 export const updateUserRole = async (req, res) => {
-  const schema = z.object({ role: z.enum(["ADMIN", "CEO", "ICT_OFFICER", "JOB_SEEKER", "EMPLOYER"]) });
+  const schema = z.object({ role: z.enum(["ADMIN"]) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 

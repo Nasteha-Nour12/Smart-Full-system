@@ -60,12 +60,12 @@ const Operations = () => {
                 <span className="font-semibold text-slate-900">{executive.totals.users}</span>
               </div>
               <div className="flex justify-between rounded-lg bg-slate-50 p-3">
-                <span>Total programs</span>
-                <span className="font-semibold text-slate-900">{executive.totals.programs}</span>
+                <span>Total companies</span>
+                <span className="font-semibold text-slate-900">{executive.totals.companies}</span>
               </div>
               <div className="flex justify-between rounded-lg bg-slate-50 p-3">
-                <span>Total opportunities</span>
-                <span className="font-semibold text-slate-900">{executive.totals.opportunities}</span>
+                <span>Total internships</span>
+                <span className="font-semibold text-slate-900">{executive.totals.internships}</span>
               </div>
               <div className="flex justify-between rounded-lg bg-slate-50 p-3">
                 <span>Total Go To Work cases</span>
@@ -73,16 +73,16 @@ const Operations = () => {
               </div>
             </div>
 
-            <h3 className="mt-6 text-base font-semibold text-slate-900">Overdue Published Opportunities</h3>
+            <h3 className="mt-6 text-base font-semibold text-slate-900">Internships Ending Soon</h3>
             <div className="mt-3 space-y-3">
-              {operations.recentIssues.overduePublishedOpportunities.map((item) => (
+              {operations.recentIssues.internshipsEndingSoon.map((item) => (
                 <div key={item._id} className="rounded-lg bg-slate-50 p-3 text-sm">
-                  <p className="font-medium text-slate-900">{item.title}</p>
-                  <p className="text-slate-500">{item.companyId?.name || "-"} • {new Date(item.deadline).toLocaleDateString()}</p>
+                  <p className="font-medium text-slate-900">{item.position}</p>
+                  <p className="text-slate-500">{item.companyId?.name || "-"} - {new Date(item.endDate).toLocaleDateString()}</p>
                 </div>
               ))}
-              {operations.recentIssues.overduePublishedOpportunities.length === 0 ? (
-                <p className="text-sm text-slate-500">No overdue published opportunities.</p>
+              {operations.recentIssues.internshipsEndingSoon.length === 0 ? (
+                <p className="text-sm text-slate-500">No internships ending soon.</p>
               ) : null}
             </div>
           </div>

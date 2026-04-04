@@ -6,9 +6,6 @@ const useRole = () => {
 
   return {
     isAdmin: user?.role === "ADMIN",
-    isTeacher: user?.role === "TEACHER",
-    isStudent: user?.role === "STUDENT",
-    isParent: user?.role === "PARENT",
     role: user?.role,
   };
 };

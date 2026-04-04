@@ -34,7 +34,7 @@ const Dashboard = () => {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Pending Users" value={findCount("pendingUsers")} />
             <StatCard label="Pending Companies" value={findCount("companiesPendingReview")} />
-            <StatCard label="Overdue Opportunities" value={findCount("overduePublishedOpportunities")} />
+            <StatCard label="Pending Internships" value={findCount("internshipsPending")} />
             <StatCard label="Unmatched GTW Cases" value={findCount("goToWorkWithoutMatch")} />
           </div>
 

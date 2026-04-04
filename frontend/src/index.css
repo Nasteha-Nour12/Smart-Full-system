@@ -1,2 +1,217 @@
 
 @import "tailwindcss";
+
+:root {
+  --ses-bg: #eef4ff;
+  --ses-bg-alt: #f8fbff;
+  --ses-surface: #ffffff;
+  --ses-text: #0f172a;
+  --ses-muted: #475569;
+  --ses-border: #d6e4ff;
+  --ses-primary: #0b132b;
+  --ses-accent: #06b6d4;
+  --ses-table-hover: #f8fbff;
+}
+
+html.dark {
+  --ses-bg: #0b1220;
+  --ses-bg-alt: #0f172a;
+  --ses-surface: #111827;
+  --ses-text: #e2e8f0;
+  --ses-muted: #94a3b8;
+  --ses-border: #243244;
+  --ses-primary: #e2e8f0;
+  --ses-accent: #22d3ee;
+  --ses-table-hover: #1a2438;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Sora", "Segoe UI", "Trebuchet MS", sans-serif;
+  color: var(--ses-text);
+  background:
+    radial-gradient(1200px 500px at 8% -5%, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0) 55%),
+    radial-gradient(900px 500px at 92% -12%, rgba(34, 211, 238, 0.18) 0%, rgba(34, 211, 238, 0) 52%),
+    linear-gradient(180deg, var(--ses-bg) 0%, var(--ses-bg-alt) 100%);
+}
+
+.ses-app-bg {
+  background: transparent;
+}
+
+.ses-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.ses-card {
+  background: var(--ses-surface);
+  border: 1px solid var(--ses-border);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.ses-title {
+  letter-spacing: -0.02em;
+}
+
+.ses-page-title {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+table thead th {
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+table tbody tr:hover {
+  background: var(--ses-table-hover);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOutScale {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeInScale 0.2s ease-out;
+}
+
+.animate-fadeOut {
+  animation: fadeOutScale 0.2s ease-in;
+}
+
+html.dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+html.dark .text-slate-900 {
+  color: #ffffff !important;
+}
+
+html.dark .text-slate-800,
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: #ffffff !important;
+}
+
+html.dark .text-slate-400,
+html.dark .text-slate-300 {
+  color: #ffffff !important;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+html.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-slate-50 {
+  background-color: #172033 !important;
+  border: 1px solid #334155 !important;
+}
+
+html.dark label,
+html.dark p,
+html.dark span,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark th,
+html.dark td {
+  color: #ffffff !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  color: #ffffff !important;
+}
+
+html.dark select,
+html.dark option {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+html.dark select:focus,
+html.dark select:active {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+html.dark option:checked,
+html.dark option:hover {
+  background: #1e3a8a !important;
+  color: #ffffff !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #cbd5e1 !important;
+}
+
+html.dark .ses-panel {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid #334155;
+}
+
+html.dark .ses-sidebar {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #334155;
+}
+
+html.dark .ses-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+}
+
+html.dark .ses-page-title {
+  background: rgba(15, 23, 42, 0.82) !important;
+  border-color: #334155 !important;
+}
+
+html.dark .shadow,
+html.dark .shadow-sm,
+html.dark .shadow-lg,
+html.dark .shadow-xl {
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35) !important;
+}

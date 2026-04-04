@@ -34,7 +34,7 @@ const Internships = () => {
     <div>
       <PageTitle
         title="Internships"
-        subtitle="This page is connected, but backend permissions currently restrict management to admin users."
+        subtitle="Internship employer access is enabled for internship monitoring."
       />
       {loading ? <Loader /> : null}
       {error ? <div className="rounded-xl bg-white p-6 text-sm text-slate-600 shadow">{error}</div> : null}

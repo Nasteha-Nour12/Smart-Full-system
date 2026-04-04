@@ -37,35 +37,24 @@ const Register = () => {
 
   /* ================= ROLE BASED REDIRECT ================= */
   if (isAuthenticated && user?.role) {
-    switch (user.role) {
-      case "ADMIN":
-        return <Navigate to="/admin" replace />;
-      case "CEO":
-        return <Navigate to="/ceo" replace />;
-      case "ICT_OFFICER":
-        return <Navigate to="/ict" replace />;
-      case "JOB_SEEKER":
-        return <Navigate to="/job-seeker" replace />;
-      case "EMPLOYER":
-        return <Navigate to="/employer" replace />;
-      default:
-        return <Navigate to="/login" replace />;
-    }
+    return <Navigate to="/admin" replace />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-semibold text-center text-slate-800 mb-6">
-          Create Account
-        </h2>
+    <div className="w-full">
+      <div className="mx-auto w-full max-w-md">
+        <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Join Platform</p>
+        <h2 className="mt-2 text-3xl font-black text-slate-900">Create Account</h2>
+        <p className="mt-2 text-sm text-slate-600">Create an admin account to get started.</p>
 
         {loading && <Loader />}
         {error && (
-          <p className="mb-4 text-sm text-red-600 text-center">{error}</p>
+          <p className="mb-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <Input
             label="Full Name"
             name="fullName"

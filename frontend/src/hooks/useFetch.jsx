@@ -1,7 +1,7 @@
 // src/hooks/useFetch.js
 import { useEffect, useState } from "react";
 
-const useFetch = (fetcher, deps = []) => {
+const useFetch = (fetcher) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +23,7 @@ const useFetch = (fetcher, deps = []) => {
 
     load();
     return () => (mounted = false);
-  }, deps);
+  }, [fetcher]);
 
   return { data, loading, error };
 };

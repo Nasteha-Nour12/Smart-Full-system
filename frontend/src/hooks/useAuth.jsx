@@ -12,25 +12,11 @@ const useAuth = () => {
   );
 
   const goByRole = (role) => {
-    switch (role) {
-      case "ADMIN":
-        navigate("/admin");
-        break;
-      case "CEO":
-        navigate("/ceo");
-        break;
-      case "ICT_OFFICER":
-        navigate("/ict");
-        break;
-      case "JOB_SEEKER":
-        navigate("/job-seeker");
-        break;
-      case "EMPLOYER":
-        navigate("/employer");
-        break;
-      default:
-        navigate("/login");
+    if (role === "ADMIN") {
+      navigate("/admin");
+      return;
     }
+    navigate("/login");
   };
 
   /* ================= LOGIN ================= */
@@ -50,7 +36,7 @@ const useAuth = () => {
     const res = await dispatch(registerUser(data));
 
     if (res.meta.requestStatus === "fulfilled") {
-      const role = res.payload?.role || res.payload?.user?.role || "JOB_SEEKER";
+      const role = res.payload?.role || res.payload?.user?.role || "ADMIN";
       goByRole(role);
     }
     return res;

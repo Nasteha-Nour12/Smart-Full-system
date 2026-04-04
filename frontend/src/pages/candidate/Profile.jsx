@@ -18,12 +18,23 @@ import { loadUser } from "../../app/authSlice";
 import useAuth from "../../hooks/useAuth";
 
 const emptyProfile = {
+  idNo: "",
+  gender: "OTHER",
+  contact: "",
+  district: "",
   location: "",
   education: "",
+  faculty: "",
   experienceLevel: "NONE",
   bio: "",
   cvUrl: "",
   idUrl: "",
+  coverLetterUrl: "",
+  secondaryCertificateUrl: "",
+  universityCertificateUrl: "",
+  passportPhoto1Url: "",
+  passportPhoto2Url: "",
+  contractLetterUrl: "",
 };
 
 const Profile = () => {
@@ -52,9 +63,16 @@ const Profile = () => {
   const profileCompletion = [
     profileForm.location,
     profileForm.education,
+    profileForm.faculty,
     profileForm.bio,
     profileForm.cvUrl,
     profileForm.idUrl,
+    profileForm.coverLetterUrl,
+    profileForm.secondaryCertificateUrl,
+    profileForm.universityCertificateUrl,
+    profileForm.passportPhoto1Url,
+    profileForm.passportPhoto2Url,
+    profileForm.contractLetterUrl,
     skills.length > 0 ? "skills" : "",
   ].filter(Boolean).length;
 
@@ -65,12 +83,23 @@ const Profile = () => {
       const res = await getMyCandidateProfileRequest();
       const profile = res.data;
       setProfileForm({
+        idNo: profile?.idNo || "",
+        gender: profile?.gender || "OTHER",
+        contact: profile?.contact || "",
+        district: profile?.district || "",
         location: profile?.location || "",
         education: profile?.education || "",
+        faculty: profile?.faculty || "",
         experienceLevel: profile?.experienceLevel || "NONE",
         bio: profile?.bio || "",
         cvUrl: profile?.cvUrl || "",
         idUrl: profile?.idUrl || "",
+        coverLetterUrl: profile?.coverLetterUrl || "",
+        secondaryCertificateUrl: profile?.secondaryCertificateUrl || "",
+        universityCertificateUrl: profile?.universityCertificateUrl || "",
+        passportPhoto1Url: profile?.passportPhoto1Url || "",
+        passportPhoto2Url: profile?.passportPhoto2Url || "",
+        contractLetterUrl: profile?.contractLetterUrl || "",
       });
       setSkills(profile?.skills || []);
     } catch (err) {
@@ -147,11 +176,11 @@ const Profile = () => {
             <div className="h-3 overflow-hidden rounded-full bg-white/20">
               <div
                 className="h-full rounded-full bg-emerald-400 transition-all"
-                style={{ width: `${(profileCompletion / 6) * 100}%` }}
+                style={{ width: `${(profileCompletion / 12) * 100}%` }}
               />
             </div>
           </div>
-          <p className="text-lg font-semibold">{Math.round((profileCompletion / 6) * 100)}%</p>
+          <p className="text-lg font-semibold">{Math.round((profileCompletion / 12) * 100)}%</p>
         </div>
         <p className="mt-2 text-sm text-slate-200">
           Buuxi xogtaada iyo ugu yaraan hal skill si profile-kaagu u noqdo mid diyaar u ah fursadaha.
@@ -171,6 +200,42 @@ const Profile = () => {
               label="Phone"
               value={userForm.phone}
               onChange={(event) => setUserForm((prev) => ({ ...prev, phone: event.target.value }))}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="ID No"
+              value={profileForm.idNo}
+              onChange={(event) => setProfileForm((prev) => ({ ...prev, idNo: event.target.value }))}
+            />
+            <Input
+              label="District"
+              value={profileForm.district}
+              onChange={(event) => setProfileForm((prev) => ({ ...prev, district: event.target.value }))}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Gender</label>
+              <select
+                className="w-full rounded border border-slate-300 px-3 py-2"
+                value={profileForm.gender}
+                onChange={(event) => setProfileForm((prev) => ({ ...prev, gender: event.target.value }))}
+              >
+                <option value="MALE">MALE</option>
+                <option value="FEMALE">FEMALE</option>
+                <option value="OTHER">OTHER</option>
+              </select>
+            </div>
+            <Input
+              label="Contact"
+              value={profileForm.contact}
+              onChange={(event) => setProfileForm((prev) => ({ ...prev, contact: event.target.value }))}
+            />
+            <Input
+              label="Faculty"
+              value={profileForm.faculty}
+              onChange={(event) => setProfileForm((prev) => ({ ...prev, faculty: event.target.value }))}
             />
           </div>
 
@@ -229,6 +294,48 @@ const Profile = () => {
               buttonLabel="Upload ID"
               helperText="National ID, passport, ama PDF"
               onUploaded={(url) => setProfileForm((prev) => ({ ...prev, idUrl: url }))}
+            />
+            <FileUploadField
+              label="Cover Letter"
+              value={profileForm.coverLetterUrl}
+              accept=".pdf,.doc,.docx,image/*"
+              buttonLabel="Upload Cover Letter"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, coverLetterUrl: url }))}
+            />
+            <FileUploadField
+              label="Secondary Certificate"
+              value={profileForm.secondaryCertificateUrl}
+              accept=".pdf,.doc,.docx,image/*"
+              buttonLabel="Upload Secondary Certificate"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, secondaryCertificateUrl: url }))}
+            />
+            <FileUploadField
+              label="University Certificate"
+              value={profileForm.universityCertificateUrl}
+              accept=".pdf,.doc,.docx,image/*"
+              buttonLabel="Upload University Certificate"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, universityCertificateUrl: url }))}
+            />
+            <FileUploadField
+              label="Passport Photo 1"
+              value={profileForm.passportPhoto1Url}
+              accept="image/*"
+              buttonLabel="Upload Passport Photo 1"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, passportPhoto1Url: url }))}
+            />
+            <FileUploadField
+              label="Passport Photo 2"
+              value={profileForm.passportPhoto2Url}
+              accept="image/*"
+              buttonLabel="Upload Passport Photo 2"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, passportPhoto2Url: url }))}
+            />
+            <FileUploadField
+              label="Contract Letter"
+              value={profileForm.contractLetterUrl}
+              accept=".pdf,.doc,.docx,image/*"
+              buttonLabel="Upload Contract Letter"
+              onUploaded={(url) => setProfileForm((prev) => ({ ...prev, contractLetterUrl: url }))}
             />
           </div>
 

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import coaLogo from "../../assets/coa-logo.svg";
 
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -28,58 +29,56 @@ const Login = () => {
 
   /* ================= ROLE BASED REDIRECT ================= */
   if (isAuthenticated && user?.role) {
-    switch (user.role) {
-      case "ADMIN":
-        return <Navigate to="/admin" replace />;
-      case "CEO":
-        return <Navigate to="/ceo" replace />;
-      case "ICT_OFFICER":
-        return <Navigate to="/ict" replace />; // ✅ sax
-      case "JOB_SEEKER":
-        return <Navigate to="/job-seeker" replace />;
-      case "EMPLOYER":
-        return <Navigate to="/employer" replace />;
-      default:
-        return <Navigate to="/login" replace />;
-    }
+    return <Navigate to="/admin" replace />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-semibold text-center text-slate-800 mb-6">
-          Login
-        </h2>
+    <div className="w-full">
+      <div className="mx-auto w-full max-w-sm">
+        <div className="mb-5 flex flex-col items-center justify-center gap-2">
+          <img src={coaLogo} alt="System logo" className="h-16 w-16 rounded-2xl shadow-lg shadow-black/30" />
+          <p className="text-sm font-semibold tracking-[0.2em] text-cyan-100">SMART</p>
+        </div>
+        <h2 className="text-center text-2xl font-bold text-white">Login</h2>
 
         {loading && <Loader />}
 
-        {error && <p className="mb-4 text-sm text-red-600 text-center">{error}</p>}
+        {error ? (
+          <p className="mb-4 mt-4 rounded-lg border border-red-300/40 bg-red-500/15 px-3 py-2 text-sm text-red-100">
+            {error}
+          </p>
+        ) : null}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <Input
-            label="Enter Your Email"
             name="identifier"
             type="text"
-            placeholder="Enter Your Email"
+            placeholder="Email"
             value={form.identifier}
             onChange={handleChange}
+            className="border-white bg-white text-slate-900 placeholder:text-slate-500 focus:border-cyan-400 focus:ring-cyan-100"
             required
           />
 
           <Input
-            label="Password"
             name="password"
             type="password"
             placeholder="Enter password"
             value={form.password}
             onChange={handleChange}
+            className="border-white bg-white text-slate-900 placeholder:text-slate-500 focus:border-cyan-400 focus:ring-cyan-100"
             required
           />
 
-          <Button type="submit" className="w-full" loading={loading}>
+          <Button
+            type="submit"
+            className="w-full bg-white text-slate-900 hover:bg-slate-100"
+            loading={loading}
+          >
             {loading ? "Logging in..." : "Login"}
           </Button>
         </form>
+
       </div>
     </div>
   );

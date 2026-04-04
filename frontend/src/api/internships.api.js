@@ -34,3 +34,8 @@ export const updateInternshipStatusRequest = async (id, status) => {
   const res = await api.patch(`/internships/${id}/status`, { status });
   return res.data;
 };
+
+export const importInternshipsRequest = async (rows) => {
+  const res = await api.post("/internships/import", { rows });
+  return res.data;
+};

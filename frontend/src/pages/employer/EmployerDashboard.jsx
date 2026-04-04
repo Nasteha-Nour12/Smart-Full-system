@@ -3,14 +3,16 @@ import PageTitle from "../../components/common/PageTitle";
 import StatCard from "../../components/common/StatCard";
 import Loader from "../../components/ui/Loader";
 import { getCompaniesRequest } from "../../api/companies.api";
-import { getOpportunitiesRequest } from "../../api/opportunities.api";
+import { getInternshipsRequest } from "../../api/internships.api";
+import { getTrainingProgramsRequest } from "../../api/trainingPrograms.api";
 
 const EmployerDashboard = () => {
   const [stats, setStats] = useState({
     companies: 0,
     approvedCompanies: 0,
-    opportunities: 0,
-    publishedOpportunities: 0,
+    internships: 0,
+    activeInternships: 0,
+    trainingPrograms: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -18,19 +20,22 @@ const EmployerDashboard = () => {
     const loadStats = async () => {
       try {
         setLoading(true);
-        const [companiesRes, opportunitiesRes] = await Promise.all([
+        const [companiesRes, internshipsRes, trainingsRes] = await Promise.all([
           getCompaniesRequest(),
-          getOpportunitiesRequest(),
+          getInternshipsRequest(),
+          getTrainingProgramsRequest(),
         ]);
 
         const companies = companiesRes.data || [];
-        const opportunities = opportunitiesRes.data || [];
+        const internships = internshipsRes.data || [];
+        const trainings = trainingsRes.data || [];
 
         setStats({
           companies: companies.length,
           approvedCompanies: companies.filter((company) => company.status === "APPROVED").length,
-          opportunities: opportunities.length,
-          publishedOpportunities: opportunities.filter((item) => item.status === "PUBLISHED").length,
+          internships: internships.length,
+          activeInternships: internships.filter((item) => item.status === "ACTIVE").length,
+          trainingPrograms: trainings.length,
         });
       } finally {
         setLoading(false);
@@ -42,14 +47,15 @@ const EmployerDashboard = () => {
 
   return (
     <div>
-      <PageTitle title="Employer Dashboard" subtitle="Overview of company records and market opportunities" />
+      <PageTitle title="Employer Dashboard" subtitle="Overview of company records and internship pipeline" />
       {loading ? <Loader /> : null}
       {!loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <StatCard label="Companies" value={stats.companies} />
           <StatCard label="Approved Companies" value={stats.approvedCompanies} />
-          <StatCard label="All Opportunities" value={stats.opportunities} />
-          <StatCard label="Published Opportunities" value={stats.publishedOpportunities} />
+          <StatCard label="Training Programs" value={stats.trainingPrograms} />
+          <StatCard label="All Internships" value={stats.internships} />
+          <StatCard label="Active Internships" value={stats.activeInternships} />
         </div>
       ) : null}
     </div>

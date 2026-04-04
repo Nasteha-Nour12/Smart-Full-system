@@ -29,3 +29,8 @@ export const updateGoToWorkStatusRequest = async (id, status) => {
   const res = await api.patch(`/go-to-work/${id}/status`, { status });
   return res.data;
 };
+
+export const importGoToWorkRequest = async (rows) => {
+  const res = await api.post("/go-to-work/import", { rows });
+  return res.data;
+};

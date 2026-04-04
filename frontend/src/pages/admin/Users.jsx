@@ -14,15 +14,15 @@ import {
 } from "../../api/user.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 
-const roleOptions = ["ADMIN", "CEO", "ICT_OFFICER", "JOB_SEEKER", "EMPLOYER"];
-const creatableRoleOptions = ["ADMIN", "CEO", "ICT_OFFICER", "EMPLOYER"];
+const roleOptions = ["ADMIN"];
+const creatableRoleOptions = ["ADMIN"];
 
 const emptyCreateForm = {
   fullName: "",
   email: "",
   phone: "",
   password: "",
-  role: "EMPLOYER",
+  role: "ADMIN",
   status: "ACTIVE",
 };
 
@@ -127,8 +127,8 @@ const Users = () => {
 
   return (
     <div>
-      <PageTitle title="Users" subtitle="Approve accounts, assign roles, and manage status">
-        <Button onClick={() => setCreateOpen(true)}>Create Staff User</Button>
+      <PageTitle title="Users" subtitle="Approve accounts and manage admin users">
+        <Button onClick={() => setCreateOpen(true)}>Create Admin User</Button>
       </PageTitle>
 
       {loading ? <Loader /> : null}
@@ -253,7 +253,7 @@ const Users = () => {
 
       <Modal
         open={createOpen}
-        title="Create Admin / Staff User"
+        title="Create Admin User"
         onClose={() => setCreateOpen(false)}
         footer={null}
       >

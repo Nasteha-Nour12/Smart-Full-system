@@ -4,7 +4,9 @@ import { loginRequest, registerRequest, logoutRequest } from "../api/auth.api";
 const getStoredUser = () => {
   try {
     const raw = localStorage.getItem("smart-ses-user");
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return user?.role === "ADMIN" ? user : null;
   } catch {
     return null;
   }
@@ -92,10 +94,10 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.user = action.payload;
-        state.isAuthenticated = true;
+        state.user = action.payload?.role === "ADMIN" ? action.payload : null;
+        state.isAuthenticated = !!state.user;
         state.loading = false;
-        persistUser(action.payload);
+        persistUser(state.user);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.error = action.payload;
@@ -108,10 +110,10 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.user = action.payload;
-        state.isAuthenticated = true;
+        state.user = action.payload?.role === "ADMIN" ? action.payload : null;
+        state.isAuthenticated = !!state.user;
         state.loading = false;
-        persistUser(action.payload);
+        persistUser(state.user);
       })
       .addCase(login.rejected, (state, action) => {
         state.error = action.payload;
@@ -123,8 +125,8 @@ const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(loadUser.fulfilled, (state, action) => {
-        state.user = action.payload;
-        state.isAuthenticated = true;
+        state.user = action.payload?.role === "ADMIN" ? action.payload : null;
+        state.isAuthenticated = !!state.user;
         state.loading = false;
       })
       .addCase(loadUser.rejected, (state) => {

@@ -24,7 +24,7 @@ const Dashboard = () => {
 
   return (
     <div>
-      <PageTitle title="CEO Dashboard" subtitle="Executive overview of growth, approvals, and program pipeline" />
+      <PageTitle title="CEO Dashboard" subtitle="Executive overview of growth, approvals, and workforce pipeline" />
       {loading ? <Loader /> : null}
 
       {!loading && data ? (
@@ -32,8 +32,8 @@ const Dashboard = () => {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <StatCard label="Users" value={data.totals.users} />
             <StatCard label="Companies" value={data.totals.companies} />
-            <StatCard label="Programs" value={data.totals.programs} />
-            <StatCard label="Opportunities" value={data.totals.opportunities} />
+            <StatCard label="Candidate Profiles" value={data.totals.candidateProfiles} />
+            <StatCard label="Internships" value={data.totals.internships} />
             <StatCard label="Pending Approvals" value={data.totals.pendingApprovals} />
           </div>
 
@@ -42,9 +42,9 @@ const Dashboard = () => {
               <h2 className="text-lg font-semibold text-slate-900">Business Flow</h2>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="rounded-lg bg-slate-50 p-4">
-                  <p className="text-sm font-medium text-slate-700">Applications</p>
+                  <p className="text-sm font-medium text-slate-700">Internships</p>
                   <div className="mt-3 space-y-2">
-                    {Object.entries(data.breakdowns.applicationStatuses || {}).map(([key, value]) => (
+                    {Object.entries(data.breakdowns.internshipStatuses || {}).map(([key, value]) => (
                       <div key={key} className="flex items-center justify-between text-sm">
                         <span>{key}</span>
                         <span className="font-semibold text-slate-900">{value}</span>
@@ -82,9 +82,9 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Open Programs</p>
+                  <p className="text-sm text-slate-500">Active Internships</p>
                   <p className="mt-2 text-3xl font-semibold text-slate-900">
-                    {data.breakdowns.programStatuses?.OPEN || 0}
+                    {data.breakdowns.internshipStatuses?.ACTIVE || 0}
                   </p>
                 </div>
               </div>

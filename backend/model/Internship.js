@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const INTERNSHIP_STATUS = ["PENDING", "ACTIVE", "COMPLETED", "CANCELLED"];
+const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER"];
 
 const internshipSchema = new mongoose.Schema(
   {
@@ -50,6 +51,27 @@ const internshipSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+
+    idNo: { type: String, required: true, trim: true },
+    fullName: { type: String, required: true, trim: true },
+    gender: { type: String, enum: GENDER_OPTIONS, required: true },
+    contact: { type: String, required: true, trim: true },
+    district: { type: String, required: true, trim: true },
+    educationLevel: { type: String, required: true, trim: true },
+    faculty: { type: String, required: true, trim: true },
+    otherSkills: [{ type: String, trim: true }],
+    internshipFee: { type: Number, min: 0, default: 0 },
+    files: {
+      cvUrl: { type: String, trim: true, default: "" },
+      coverLetterUrl: { type: String, trim: true, default: "" },
+      nationalIdUrl: { type: String, trim: true, default: "" },
+      secondaryCertificateUrl: { type: String, trim: true, default: "" },
+      universityCertificateUrl: { type: String, trim: true, default: "" },
+      passportPhoto1Url: { type: String, trim: true, default: "" },
+      passportPhoto2Url: { type: String, trim: true, default: "" },
+      contractLetterUrl: { type: String, trim: true, default: "" },
+    },
+    notes: { type: String, trim: true, default: "" },
   },
   { timestamps: true }
 );

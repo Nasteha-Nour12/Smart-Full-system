@@ -24,6 +24,11 @@ const goToWorkSchema = new mongoose.Schema(
       enum: GTW_STATUS,
       default: "SUBMITTED",
     },
+    readinessStatus: { type: String, trim: true, default: "PENDING" },
+    interviewStatus: { type: String, trim: true, default: "NOT_SCHEDULED" },
+    placementStatus: { type: String, trim: true, default: "IN_QUEUE" },
+    jobTitle: { type: String, trim: true, default: "" },
+    workLocation: { type: String, trim: true, default: "" },
 
     matchedCompanyId: {
       type: mongoose.Schema.Types.ObjectId,

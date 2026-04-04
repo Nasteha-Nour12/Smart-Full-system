@@ -1,18 +1,17 @@
 import express from 'express';
-import { connect } from 'mongoose';
+import path from "path";
+import { fileURLToPath } from "url";
 import conectBD from './config/db.js';
+import { port } from './config/config.js';
 import userRouter from './routes/UserRoute.js';
 import companyRoutes from "./routes/companyRoutes.js";
-import programRoutes from "./routes/programRoutes.js";
 import candidateProfileRoutes from "./routes/candidateProfileRoutes.js";
-import enrollmentRoutes from "./routes/enrollmentRoutes.js";
 import internshipRoutes from "./routes/internshipRoutes.js";
-import opportunityRoutes from "./routes/opportunityRoutes.js";
-import applicationRoutes from "./routes/applicationRoutes.js";
 import goToWorkRoutes from "./routes/goToWorkRoutes.js";
-import certificateRoutes from "./routes/certificateRoutes.js";
 import insightRoutes from "./routes/insightRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import trainingProgramRoutes from "./routes/trainingProgramRoutes.js";
+import hospitalityProgramRoutes from "./routes/hospitalityProgramRoutes.js";
 
 
 
@@ -21,29 +20,45 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import cookieParser from 'cookie-parser';
 import cors from "cors"
 const app = express();
-const PORT = 8000
+const PORT = port
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend URL
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS blocked for this origin"));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
 );
 
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ ok: true, message: "Backend connected" });
+});
+
 app.use('/api/users', userRouter);
 app.use("/api/companies", companyRoutes);
-app.use("/api/programs", programRoutes);
 app.use("/api/candidate-profiles", candidateProfileRoutes);
-app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/internships", internshipRoutes);
-app.use("/api/opportunities", opportunityRoutes);
-app.use("/api/applications", applicationRoutes);
 app.use("/api/go-to-work", goToWorkRoutes);
-app.use("/api/certificates", certificateRoutes);
 app.use("/api/insights", insightRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/training-programs", trainingProgramRoutes);
+app.use("/api/hospitality-programs", hospitalityProgramRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // forget password
 
 
