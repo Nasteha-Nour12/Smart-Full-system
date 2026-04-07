@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   registerUser, loginUser, getAllUsers, getSingleUser,
-  approveUser, banUser, updateUserRole, updateMe, createUserByAdmin
+  approveUser, banUser, updateUserRole, updateMe, createUserByAdmin, getMe, logout
 } from "../controller/UserController.js";
 import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 
@@ -9,7 +9,9 @@ const r = Router();
 
 r.post("/register", registerUser);
 r.post("/login", loginUser);
+r.post("/logout", authenticate, logout);
 r.post("/admin-create", authenticate, authorizeRoles("ADMIN"), createUserByAdmin);
+r.get("/me", authenticate, getMe);
 
 r.get("/", authenticate, authorizeRoles("ADMIN"), getAllUsers);
 r.get("/:id", authenticate, authorizeRoles("ADMIN"), getSingleUser);

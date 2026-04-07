@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import Button from "../ui/Button";
 import { uploadSingleFileRequest } from "../../api/uploads.api";
 import { getErrorMessage } from "../../utils/formatters";
+import Modal from "../ui/Modal";
 
 const FileUploadField = ({
   label,
@@ -13,6 +14,17 @@ const FileUploadField = ({
 }) => {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [openPreview, setOpenPreview] = useState(false);
+
+  const normalizedUrl = String(value || "").trim();
+  const lowerUrl = normalizedUrl.toLowerCase();
+  const isImage = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"].some((ext) =>
+    lowerUrl.includes(ext)
+  );
+  const isPdf = lowerUrl.includes(".pdf");
+  const previewUrl = isPdf || isImage
+    ? normalizedUrl
+    : `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(normalizedUrl)}`;
 
   const handleChange = async (event) => {
     const file = event.target.files?.[0];
@@ -37,14 +49,13 @@ const FileUploadField = ({
           <p className="text-sm font-medium text-slate-800">{label}</p>
           {helperText ? <p className="mt-1 text-xs text-slate-500">{helperText}</p> : null}
           {value ? (
-            <a
-              href={value}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-block text-sm text-blue-600 underline"
+            <button
+              type="button"
+              className="mt-2 inline-block text-left text-sm text-blue-600 underline"
+              onClick={() => setOpenPreview(true)}
             >
               View uploaded file
-            </a>
+            </button>
           ) : (
             <p className="mt-2 text-sm text-slate-400">No file uploaded yet</p>
           )}
@@ -68,6 +79,23 @@ const FileUploadField = ({
           </Button>
         </div>
       </div>
+      <Modal open={openPreview} onClose={() => setOpenPreview(false)} title={`${label} Preview`} footer={null} size="full">
+        {normalizedUrl ? (
+          <div className="h-[75vh] overflow-hidden rounded-lg border border-slate-200 bg-white">
+            {isImage ? (
+              <div className="flex h-full items-center justify-center bg-slate-50 p-4">
+                <img src={normalizedUrl} alt={`${label} preview`} className="max-h-full max-w-full object-contain" />
+              </div>
+            ) : (
+              <iframe
+                src={previewUrl}
+                title={`${label} preview`}
+                className="h-full w-full"
+              />
+            )}
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 };
