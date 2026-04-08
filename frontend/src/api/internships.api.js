@@ -35,6 +35,11 @@ export const updateInternshipStatusRequest = async (id, status) => {
   return res.data;
 };
 
+export const deleteInternshipRequest = async (id) => {
+  const res = await api.delete(`/internships/${id}`);
+  return res.data;
+};
+
 export const importInternshipsRequest = async (rows) => {
   const res = await api.post("/internships/import", { rows });
   return res.data;
