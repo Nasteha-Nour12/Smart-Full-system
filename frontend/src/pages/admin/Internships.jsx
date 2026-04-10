@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import FileUploadField from "../../components/common/FileUploadField";
 import ExcelImportPanel from "../../components/common/ExcelImportPanel";
 import PageTitle from "../../components/common/PageTitle";
 import Loader from "../../components/ui/Loader";
@@ -7,10 +6,10 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Modal from "../../components/ui/Modal";
 import {
+  deleteInternshipRequest,
   getInternshipsRequest,
   importInternshipsRequest,
   requestInternshipRequest,
-  updateInternshipRequest,
   updateInternshipStatusRequest,
 } from "../../api/internships.api";
 import { getCompaniesRequest } from "../../api/companies.api";
@@ -19,17 +18,7 @@ import { formatDate, getErrorMessage } from "../../utils/formatters";
 const Internships = () => {
   const [internships, setInternships] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const [selected, setSelected] = useState(null);
   const [openCreate, setOpenCreate] = useState(false);
-  const [form, setForm] = useState({
-    position: "",
-    startDate: "",
-    endDate: "",
-    status: "PENDING",
-    evaluationScore: "",
-    recommendationLetterUrl: "",
-    internshipFee: 0,
-  });
   const [createForm, setCreateForm] = useState({
     candidateId: "",
     companyId: "",
@@ -72,42 +61,22 @@ const Internships = () => {
     loadInternships();
   }, []);
 
-  const openManage = (internship) => {
-    setSelected(internship);
-    setForm({
-      position: internship.position || "",
-      startDate: internship.startDate?.slice(0, 10) || "",
-      endDate: internship.endDate?.slice(0, 10) || "",
-      status: internship.status || "PENDING",
-      evaluationScore: internship.evaluationScore ?? "",
-      recommendationLetterUrl: internship.recommendationLetterUrl || "",
-      internshipFee: internship.internshipFee ?? 0,
-    });
-  };
-
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-      await updateInternshipRequest(selected._id, {
-        ...form,
-        evaluationScore: form.evaluationScore === "" ? null : Number(form.evaluationScore),
-        internshipFee: Number(form.internshipFee || 0),
-      });
-      setSelected(null);
-      await loadInternships();
-    } catch (err) {
-      alert(getErrorMessage(err, "Failed to update internship"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleStatus = async (id, status) => {
     try {
       await updateInternshipStatusRequest(id, status);
       await loadInternships();
     } catch (err) {
       alert(getErrorMessage(err, "Failed to update internship status"));
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Delete this internship row?")) return;
+    try {
+      await deleteInternshipRequest(id);
+      await loadInternships();
+    } catch (err) {
+      alert(getErrorMessage(err, "Failed to delete internship"));
     }
   };
 
@@ -210,11 +179,8 @@ const Internships = () => {
                   <td className="p-3">{internship.status}</td>
                   <td className="p-3">${internship.internshipFee || 0}</td>
                   <td className="p-3 text-right">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button variant="secondary" onClick={() => openManage(internship)}>
-                        Manage
-                      </Button>
-                      {["PENDING", "ACTIVE", "COMPLETED", "CANCELLED"].map((status) => (
+                    <div className="flex flex-wrap justify-end gap-2 md:justify-end">
+                      {["PENDING", "ACTIVE", "COMPLETED"].map((status) => (
                         <Button
                           key={status}
                           variant="secondary"
@@ -224,6 +190,9 @@ const Internships = () => {
                           {status}
                         </Button>
                       ))}
+                      <Button variant="danger" onClick={() => handleDelete(internship._id)}>
+                        Delete
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -239,77 +208,6 @@ const Internships = () => {
           </table>
         </div>
       ) : null}
-
-      <Modal open={!!selected} title="Manage Internship" onClose={() => setSelected(null)} footer={null}>
-        {selected ? (
-          <div className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              <Input
-                label="Position"
-                value={form.position}
-                onChange={(event) => setForm((prev) => ({ ...prev, position: event.target.value }))}
-              />
-              <div>
-                <label className="mb-1 block text-sm font-medium">Status</label>
-                <select
-                  className="w-full rounded border border-slate-300 px-3 py-2"
-                  value={form.status}
-                  onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
-                >
-                  <option value="PENDING">PENDING</option>
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                  <option value="CANCELLED">CANCELLED</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <Input
-                label="Start Date"
-                type="date"
-                value={form.startDate}
-                onChange={(event) => setForm((prev) => ({ ...prev, startDate: event.target.value }))}
-              />
-              <Input
-                label="End Date"
-                type="date"
-                value={form.endDate}
-                onChange={(event) => setForm((prev) => ({ ...prev, endDate: event.target.value }))}
-              />
-            </div>
-            <Input
-              label="Evaluation Score"
-              type="number"
-              min="0"
-              max="100"
-              value={form.evaluationScore}
-              onChange={(event) => setForm((prev) => ({ ...prev, evaluationScore: event.target.value }))}
-            />
-            <Input
-              label="Internship Fee"
-              type="number"
-              min="0"
-              value={form.internshipFee}
-              onChange={(event) => setForm((prev) => ({ ...prev, internshipFee: event.target.value }))}
-            />
-            <FileUploadField
-              label="Recommendation Letter"
-              value={form.recommendationLetterUrl}
-              accept=".pdf,.doc,.docx,image/*"
-              buttonLabel="Upload Letter"
-              helperText="Upload recommendation ama completion letter"
-              onUploaded={(url) =>
-                setForm((prev) => ({ ...prev, recommendationLetterUrl: url }))
-              }
-            />
-            <div className="flex justify-end">
-              <Button onClick={handleSave} loading={saving}>
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        ) : null}
-      </Modal>
 
       <Modal open={openCreate} title="Add Internship" onClose={() => setOpenCreate(false)} footer={null} size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
