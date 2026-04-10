@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import FileUploadField from "../../components/common/FileUploadField";
 import ExcelImportPanel from "../../components/common/ExcelImportPanel";
 import PageTitle from "../../components/common/PageTitle";
@@ -7,7 +7,6 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Modal from "../../components/ui/Modal";
 import {
-  deleteInternshipRequest,
   getInternshipsRequest,
   importInternshipsRequest,
   requestInternshipRequest,
@@ -15,15 +14,10 @@ import {
   updateInternshipStatusRequest,
 } from "../../api/internships.api";
 import { getCompaniesRequest } from "../../api/companies.api";
-import { getAllCandidateProfilesRequest } from "../../api/candidateProfiles.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 
-const educationLevels = ["BACHELOR_DEGREE", "MASTER_DEGREE", "SECONDARY_LEVEL", "NONE"];
-
 const Internships = () => {
-  const quickStatuses = ["PENDING", "ACTIVE", "COMPLETED"];
   const [internships, setInternships] = useState([]);
-  const [internshipCandidates, setInternshipCandidates] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selected, setSelected] = useState(null);
   const [openCreate, setOpenCreate] = useState(false);
@@ -61,49 +55,18 @@ const Internships = () => {
     try {
       setLoading(true);
       setError("");
-      const [internshipRes, companiesRes, candidateRes] = await Promise.all([
+      const [internshipRes, companiesRes] = await Promise.all([
         getInternshipsRequest(),
         getCompaniesRequest(),
-        getAllCandidateProfilesRequest({ selectedProgram: "INTERNSHIP" }),
       ]);
       setInternships(internshipRes.data || []);
       setCompanies(companiesRes.data || []);
-      setInternshipCandidates(candidateRes.data || []);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load internships"));
     } finally {
       setLoading(false);
     }
   };
-
-  const rows = useMemo(() => {
-    const getId = (value) => (typeof value === "object" ? String(value?._id || "") : String(value || ""));
-    const existingByCandidate = new Set(
-      internships.map((row) => getId(row.candidateId)).filter(Boolean)
-    );
-
-    const virtualRows = internshipCandidates
-      .filter((profile) => {
-        const id = getId(profile.userId);
-        return id && !existingByCandidate.has(id);
-      })
-      .map((profile) => ({
-        _id: `virtual-internship-${getId(profile.userId)}`,
-        isVirtual: true,
-        idNo: profile.idNo,
-        fullName: profile.userId?.fullName || "-",
-        contact: profile.contact || profile.userId?.phone || profile.userId?.email || "-",
-        district: profile.district || "",
-        educationLevel: profile.educationLevel || "",
-        faculty: profile.faculty || "",
-        otherSkills: Array.isArray(profile.skills) ? profile.skills.map((s) => s?.name).filter(Boolean).join(", ") : "",
-        candidateId: profile.userId,
-        status: "PENDING",
-        internshipFee: 0,
-      }));
-
-    return [...internships, ...virtualRows];
-  }, [internships, internshipCandidates]);
 
   useEffect(() => {
     loadInternships();
@@ -148,16 +111,6 @@ const Internships = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this internship row?")) return;
-    try {
-      await deleteInternshipRequest(id);
-      await loadInternships();
-    } catch (err) {
-      alert(getErrorMessage(err, "Failed to delete internship"));
-    }
-  };
-
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -191,21 +144,6 @@ const Internships = () => {
     }
   };
 
-  const openCreateFromCandidate = (row) => {
-    setCreateForm((prev) => ({
-      ...prev,
-      candidateId: row.candidateId?._id || row.candidateId || "",
-      idNo: row.idNo || "",
-      fullName: row.fullName || row.candidateId?.fullName || "",
-      contact: row.contact || row.candidateId?.phone || row.candidateId?.email || "",
-      district: row.district || "",
-      educationLevel: row.educationLevel || "",
-      faculty: row.faculty || "",
-      otherSkills: row.otherSkills || "",
-    }));
-    setOpenCreate(true);
-  };
-
   return (
     <div>
       <PageTitle title="Internships" subtitle="Manage candidate internship requests and outcomes">
@@ -213,7 +151,7 @@ const Internships = () => {
       </PageTitle>
       <ExcelImportPanel
         title="Excel Import - Internship Program"
-        description="Required columns: contact/phone/email, companyId, position, startDate, endDate, Full Name, Gender, Contact, District, Education Level, Faculty, Other Skills, Internship Status, Internship Fee, and file URL columns. ID No auto-generates."
+        description="Required columns: candidateId OR (contact/phone/email), companyId, position, startDate, endDate, ID No, Full Name, Gender, Contact, District, Education Level, Faculty, Other Skills, Internship Status, Internship Fee, and file URL columns."
         onImport={async (rows) => {
           const res = await importInternshipsRequest(rows);
           await loadInternships();
@@ -246,7 +184,7 @@ const Internships = () => {
               </tr>
             </thead>
             <tbody>
-              {rows
+              {internships
                 .filter((internship) => {
                   const key = search.toLowerCase();
                   if (!key) return true;
@@ -265,45 +203,32 @@ const Internships = () => {
                     <p className="text-xs text-slate-500">{internship.contact || internship.candidateId?.email || "-"}</p>
                   </td>
                   <td className="p-3">{internship.companyId?.name || "-"}</td>
-                  <td className="p-3">{internship.position || "-"}</td>
+                  <td className="p-3">{internship.position}</td>
                   <td className="p-3">
                     {formatDate(internship.startDate)} - {formatDate(internship.endDate)}
                   </td>
                   <td className="p-3">{internship.status}</td>
                   <td className="p-3">${internship.internshipFee || 0}</td>
                   <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {internship.isVirtual ? (
-                        <Button variant="secondary" onClick={() => openCreateFromCandidate(internship)}>
-                          Create
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button variant="secondary" onClick={() => openManage(internship)}>
+                        Manage
+                      </Button>
+                      {["PENDING", "ACTIVE", "COMPLETED", "CANCELLED"].map((status) => (
+                        <Button
+                          key={status}
+                          variant="secondary"
+                          onClick={() => handleStatus(internship._id, status)}
+                          disabled={internship.status === status}
+                        >
+                          {status}
                         </Button>
-                      ) : (
-                        <>
-                          {quickStatuses.map((status) => (
-                            <Button
-                              key={status}
-                              variant="secondary"
-                              className="min-w-[115px]"
-                              onClick={() => handleStatus(internship._id, status)}
-                              disabled={internship.status === status}
-                            >
-                              {status}
-                            </Button>
-                          ))}
-                          <Button
-                            variant="danger"
-                            className="min-w-[115px]"
-                            onClick={() => handleDelete(internship._id)}
-                          >
-                            Delete
-                          </Button>
-                        </>
-                      )}
+                      ))}
                     </div>
                   </td>
                 </tr>
               ))}
-              {rows.length === 0 ? (
+              {internships.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-4 text-center text-slate-500">
                     No internships found
@@ -390,13 +315,16 @@ const Internships = () => {
         <form onSubmit={handleCreate} className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
             <Input
+              label="Candidate User ID (optional)"
+              value={createForm.candidateId}
+              onChange={(event) => setCreateForm((prev) => ({ ...prev, candidateId: event.target.value }))}
+            />
+            <Input
               label="ID No"
               value={createForm.idNo}
-              onChange={() => {}}
-              placeholder="Auto-generated (IN...)"
-              disabled
+              onChange={(event) => setCreateForm((prev) => ({ ...prev, idNo: event.target.value }))}
+              required
             />
-            <div />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <Input
@@ -431,28 +359,12 @@ const Internships = () => {
               onChange={(event) => setCreateForm((prev) => ({ ...prev, district: event.target.value }))}
               required
             />
-            <div>
-              <label className="mb-1 block text-sm font-medium">Education Level</label>
-              <select
-                className="w-full rounded border border-slate-300 px-3 py-2"
-                value={createForm.educationLevel}
-                onChange={(event) => setCreateForm((prev) => ({ ...prev, educationLevel: event.target.value }))}
-                required
-              >
-                <option value="">Select level</option>
-                {educationLevels.map((level) => (
-                  <option key={level} value={level}>
-                    {level === "BACHELOR_DEGREE"
-                      ? "Bachelor Degree"
-                      : level === "MASTER_DEGREE"
-                        ? "Master Degree"
-                        : level === "SECONDARY_LEVEL"
-                          ? "Secondary Level"
-                          : "Midna"}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Input
+              label="Education Level"
+              value={createForm.educationLevel}
+              onChange={(event) => setCreateForm((prev) => ({ ...prev, educationLevel: event.target.value }))}
+              required
+            />
             <Input
               label="Faculty"
               value={createForm.faculty}

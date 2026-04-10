@@ -128,9 +128,7 @@ const Users = () => {
   return (
     <div>
       <PageTitle title="Users" subtitle="Approve accounts and manage admin users">
-        <Button onClick={() => setCreateOpen(true)} disabled={users.length >= 1}>
-          Create Admin User
-        </Button>
+        <Button onClick={() => setCreateOpen(true)}>Create Admin User</Button>
       </PageTitle>
 
       {loading ? <Loader /> : null}
@@ -281,7 +279,7 @@ const Users = () => {
               label="Phone"
               value={createForm.phone}
               onChange={(event) =>
-                setCreateForm((prev) => ({ ...prev, phone: event.target.value.replace(/[^\d+]/g, "") }))
+                setCreateForm((prev) => ({ ...prev, phone: event.target.value }))
               }
             />
           </div>

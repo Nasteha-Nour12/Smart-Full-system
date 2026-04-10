@@ -16,8 +16,8 @@ import CandidateProfiles from "../pages/admin/CandidateProfiles";
 import TrainingPrograms from "../pages/admin/TrainingPrograms";
 import Hospitality from "../pages/admin/Hospitality";
 import Documents from "../pages/admin/Documents";
+import ExcelImport from "../pages/admin/ExcelImport";
 import Settings from "../pages/admin/Settings";
-import Reports from "../pages/ceo/Reports";
 
 const AppRoutes = () => {
   return (
@@ -133,11 +133,11 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/admin/reports"
+          path="/admin/excel-import"
           element={
             <ProtectedRoute roles={["ADMIN"]}>
               <MainLayout>
-                <Reports />
+                <ExcelImport />
               </MainLayout>
             </ProtectedRoute>
           }

@@ -45,7 +45,7 @@ const Register = () => {
       <div className="mx-auto w-full max-w-md">
         <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Join Platform</p>
         <h2 className="mt-2 text-3xl font-black text-slate-900">Create Account</h2>
-        <p className="mt-2 text-sm text-slate-600">Create the first admin account only (single-admin mode).</p>
+        <p className="mt-2 text-sm text-slate-600">Create an admin account to get started.</p>
 
         {loading && <Loader />}
         {error && (
@@ -78,7 +78,7 @@ const Register = () => {
             label="Phone (Optional)"
             name="phone"
             type="text"
-            placeholder="Digits only"
+            placeholder="Enter your phone"
             value={form.phone}
             onChange={handleChange}
           />
@@ -87,7 +87,7 @@ const Register = () => {
             label="Password"
             name="password"
             type="password"
-            placeholder="At least 8 chars with letters and numbers"
+            placeholder="Enter password"
             value={form.password}
             onChange={handleChange}
             required

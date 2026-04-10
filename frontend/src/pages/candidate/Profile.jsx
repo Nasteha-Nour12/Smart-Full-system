@@ -36,7 +36,6 @@ const emptyProfile = {
   passportPhoto2Url: "",
   contractLetterUrl: "",
 };
-const educationLevels = ["BACHELOR_DEGREE", "MASTER_DEGREE", "SECONDARY_LEVEL", "NONE"];
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -52,9 +51,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const sanitizePhone = (value) => value.replace(/[^\d+]/g, "");
-  const sanitizeIdNo = (value) => value.replace(/[^a-zA-Z0-9-]/g, "");
 
   useEffect(() => {
     setUserForm((prev) => ({
@@ -203,18 +199,14 @@ const Profile = () => {
             <Input
               label="Phone"
               value={userForm.phone}
-              onChange={(event) =>
-                setUserForm((prev) => ({ ...prev, phone: sanitizePhone(event.target.value) }))
-              }
+              onChange={(event) => setUserForm((prev) => ({ ...prev, phone: event.target.value }))}
             />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <Input
               label="ID No"
               value={profileForm.idNo}
-              onChange={(event) =>
-                setProfileForm((prev) => ({ ...prev, idNo: sanitizeIdNo(event.target.value) }))
-              }
+              onChange={(event) => setProfileForm((prev) => ({ ...prev, idNo: event.target.value }))}
             />
             <Input
               label="District"
@@ -238,9 +230,7 @@ const Profile = () => {
             <Input
               label="Contact"
               value={profileForm.contact}
-              onChange={(event) =>
-                setProfileForm((prev) => ({ ...prev, contact: sanitizePhone(event.target.value) }))
-              }
+              onChange={(event) => setProfileForm((prev) => ({ ...prev, contact: event.target.value }))}
             />
             <Input
               label="Faculty"
@@ -255,27 +245,11 @@ const Profile = () => {
               value={profileForm.location}
               onChange={(event) => setProfileForm((prev) => ({ ...prev, location: event.target.value }))}
             />
-            <div>
-              <label className="mb-1 block text-sm font-medium">Education Level</label>
-              <select
-                className="w-full rounded border border-slate-300 px-3 py-2"
-                value={profileForm.education}
-                onChange={(event) => setProfileForm((prev) => ({ ...prev, education: event.target.value }))}
-              >
-                <option value="">Select level</option>
-                {educationLevels.map((level) => (
-                  <option key={level} value={level}>
-                    {level === "BACHELOR_DEGREE"
-                      ? "Bachelor Degree"
-                      : level === "MASTER_DEGREE"
-                        ? "Master Degree"
-                        : level === "SECONDARY_LEVEL"
-                          ? "Secondary Level"
-                          : "Midna"}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Input
+              label="Education"
+              value={profileForm.education}
+              onChange={(event) => setProfileForm((prev) => ({ ...prev, education: event.target.value }))}
+            />
           </div>
 
           <div>

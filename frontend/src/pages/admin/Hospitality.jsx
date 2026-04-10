@@ -14,7 +14,6 @@ import {
 import { getErrorMessage } from "../../utils/formatters";
 
 const hospitalityTypes = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE"];
-const educationLevels = ["BACHELOR_DEGREE", "MASTER_DEGREE", "SECONDARY_LEVEL", "NONE"];
 
 const emptyForm = {
   idNo: "",
@@ -166,27 +165,11 @@ const Hospitality = () => {
       <div className="mb-4 grid gap-3 rounded-xl bg-white p-4 shadow md:grid-cols-6">
         <Input label="Search (ID/Name/Contact)" value={filters.q} onChange={(e) => setFilters((p) => ({ ...p, q: e.target.value }))} />
         <Input label="District" value={filters.district} onChange={(e) => setFilters((p) => ({ ...p, district: e.target.value }))} />
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-slate-700">Education Level</label>
-          <select
-            className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-            value={filters.educationLevel}
-            onChange={(e) => setFilters((p) => ({ ...p, educationLevel: e.target.value }))}
-          >
-            <option value="">All</option>
-            {educationLevels.map((level) => (
-              <option key={level} value={level}>
-                {level === "BACHELOR_DEGREE"
-                  ? "Bachelor Degree"
-                  : level === "MASTER_DEGREE"
-                    ? "Master Degree"
-                    : level === "SECONDARY_LEVEL"
-                      ? "Secondary Level"
-                      : "Midna"}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Input
+          label="Education Level"
+          value={filters.educationLevel}
+          onChange={(e) => setFilters((p) => ({ ...p, educationLevel: e.target.value }))}
+        />
         <Input label="Faculty" value={filters.faculty} onChange={(e) => setFilters((p) => ({ ...p, faculty: e.target.value }))} />
         <div>
           <label className="mb-1 block text-sm font-semibold text-slate-700">Hospitality Type</label>
@@ -259,13 +242,7 @@ const Hospitality = () => {
       <Modal open={openForm} title={editingId ? "Edit Hospitality" : "Create Hospitality"} onClose={() => setOpenForm(false)} footer={null} size="xl">
         <form onSubmit={onSave} className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
-            <Input
-              label="ID No"
-              value={form.idNo}
-              onChange={() => {}}
-              placeholder="Auto-generated (HOS...)"
-              disabled
-            />
+            <Input label="ID No" value={form.idNo} onChange={(e) => setForm((p) => ({ ...p, idNo: e.target.value }))} required />
             <Input
               label="Full Name"
               value={form.fullName}
@@ -286,28 +263,12 @@ const Hospitality = () => {
             <Input label="District" value={form.district} onChange={(e) => setForm((p) => ({ ...p, district: e.target.value }))} required />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Education Level</label>
-              <select
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-                value={form.educationLevel}
-                onChange={(e) => setForm((p) => ({ ...p, educationLevel: e.target.value }))}
-                required
-              >
-                <option value="">Select level</option>
-                {educationLevels.map((level) => (
-                  <option key={level} value={level}>
-                    {level === "BACHELOR_DEGREE"
-                      ? "Bachelor Degree"
-                      : level === "MASTER_DEGREE"
-                        ? "Master Degree"
-                        : level === "SECONDARY_LEVEL"
-                          ? "Secondary Level"
-                          : "Midna"}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Input
+              label="Education Level"
+              value={form.educationLevel}
+              onChange={(e) => setForm((p) => ({ ...p, educationLevel: e.target.value }))}
+              required
+            />
             <Input label="Faculty" value={form.faculty} onChange={(e) => setForm((p) => ({ ...p, faculty: e.target.value }))} required />
             <Input
               label="Other Skills"

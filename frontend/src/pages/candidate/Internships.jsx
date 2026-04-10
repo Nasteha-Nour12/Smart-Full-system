@@ -13,8 +13,6 @@ import {
 } from "../../api/internships.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 
-const educationLevels = ["BACHELOR_DEGREE", "MASTER_DEGREE", "SECONDARY_LEVEL", "NONE"];
-
 const emptyForm = {
   companyId: "",
   position: "",
@@ -75,10 +73,7 @@ const Internships = () => {
     event.preventDefault();
     try {
       setSaving(true);
-      await requestInternshipRequest({
-        ...form,
-        internshipFee: Number(form.internshipFee || 0),
-      });
+      await requestInternshipRequest(form);
       setOpenForm(false);
       setForm(emptyForm);
       await loadData();
@@ -142,9 +137,8 @@ const Internships = () => {
             <Input
               label="ID No"
               value={form.idNo}
-              onChange={() => {}}
-              placeholder="Auto-generated (IN...)"
-              disabled
+              onChange={(event) => setForm((prev) => ({ ...prev, idNo: event.target.value }))}
+              required
             />
             <Input
               label="Full Name"
@@ -180,28 +174,12 @@ const Internships = () => {
             />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Education Level</label>
-              <select
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-                value={form.educationLevel}
-                onChange={(event) => setForm((prev) => ({ ...prev, educationLevel: event.target.value }))}
-                required
-              >
-                <option value="">Select level</option>
-                {educationLevels.map((level) => (
-                  <option key={level} value={level}>
-                    {level === "BACHELOR_DEGREE"
-                      ? "Bachelor Degree"
-                      : level === "MASTER_DEGREE"
-                        ? "Master Degree"
-                        : level === "SECONDARY_LEVEL"
-                          ? "Secondary Level"
-                          : "Midna"}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Input
+              label="Education Level"
+              value={form.educationLevel}
+              onChange={(event) => setForm((prev) => ({ ...prev, educationLevel: event.target.value }))}
+              required
+            />
             <Input
               label="Faculty"
               value={form.faculty}

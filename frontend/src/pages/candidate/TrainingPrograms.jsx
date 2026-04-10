@@ -12,8 +12,6 @@ import {
 } from "../../api/trainingPrograms.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 
-const educationLevels = ["BACHELOR_DEGREE", "MASTER_DEGREE", "SECONDARY_LEVEL", "NONE"];
-
 const emptyFiles = {
   cvUrl: "",
   coverLetterUrl: "",
@@ -149,13 +147,7 @@ const TrainingPrograms = () => {
       <Modal open={openForm} title="Training Registration" onClose={() => setOpenForm(false)} footer={null} size="xl">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
-            <Input
-              label="ID No"
-              value={form.idNo}
-              onChange={() => {}}
-              placeholder="Auto-generated (TR...)"
-              disabled
-            />
+            <Input label="ID No" value={form.idNo} onChange={(e) => setForm((p) => ({ ...p, idNo: e.target.value }))} required />
             <Input label="Full Name" value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} required />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
@@ -175,28 +167,12 @@ const TrainingPrograms = () => {
             <Input label="District" value={form.district} onChange={(e) => setForm((p) => ({ ...p, district: e.target.value }))} required />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Education Level</label>
-              <select
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-                value={form.educationLevel}
-                onChange={(e) => setForm((p) => ({ ...p, educationLevel: e.target.value }))}
-                required
-              >
-                <option value="">Select level</option>
-                {educationLevels.map((level) => (
-                  <option key={level} value={level}>
-                    {level === "BACHELOR_DEGREE"
-                      ? "Bachelor Degree"
-                      : level === "MASTER_DEGREE"
-                        ? "Master Degree"
-                        : level === "SECONDARY_LEVEL"
-                          ? "Secondary Level"
-                          : "Midna"}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Input
+              label="Education Level"
+              value={form.educationLevel}
+              onChange={(e) => setForm((p) => ({ ...p, educationLevel: e.target.value }))}
+              required
+            />
             <Input label="Faculty" value={form.faculty} onChange={(e) => setForm((p) => ({ ...p, faculty: e.target.value }))} required />
             <Input
               type="number"
@@ -263,3 +239,4 @@ const TrainingPrograms = () => {
 };
 
 export default TrainingPrograms;
+

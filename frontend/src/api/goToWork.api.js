@@ -30,11 +30,6 @@ export const updateGoToWorkStatusRequest = async (id, status) => {
   return res.data;
 };
 
-export const deleteGoToWorkRequest = async (id) => {
-  const res = await api.delete(`/go-to-work/${id}`);
-  return res.data;
-};
-
 export const importGoToWorkRequest = async (rows) => {
   const res = await api.post("/go-to-work/import", { rows });
   return res.data;

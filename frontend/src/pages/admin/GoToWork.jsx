@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import FileUploadField from "../../components/common/FileUploadField";
 import ExcelImportPanel from "../../components/common/ExcelImportPanel";
 import PageTitle from "../../components/common/PageTitle";
@@ -13,15 +13,11 @@ import {
   importGoToWorkRequest,
   updateGoToWorkRequest,
   updateGoToWorkStatusRequest,
-  deleteGoToWorkRequest,
 } from "../../api/goToWork.api";
-import { getAllCandidateProfilesRequest } from "../../api/candidateProfiles.api";
 import { formatDateTime, getErrorMessage } from "../../utils/formatters";
 
 const GoToWork = () => {
-  const quickStatuses = ["SUBMITTED", "PLACED"];
   const [requests, setRequests] = useState([]);
-  const [goToWorkCandidates, setGoToWorkCandidates] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selected, setSelected] = useState(null);
   const [openCreate, setOpenCreate] = useState(false);
@@ -61,44 +57,18 @@ const GoToWork = () => {
     try {
       setLoading(true);
       setError("");
-      const [requestRes, companiesRes, candidateRes] = await Promise.all([
+      const [requestRes, companiesRes] = await Promise.all([
         getGoToWorkRequests(),
         getCompaniesRequest(),
-        getAllCandidateProfilesRequest({ selectedProgram: "GO_TO_WORK" }),
       ]);
       setRequests(requestRes.data || []);
       setCompanies(companiesRes.data || []);
-      setGoToWorkCandidates(candidateRes.data || []);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load Go To Work requests"));
     } finally {
       setLoading(false);
     }
   };
-
-  const rows = useMemo(() => {
-    const getId = (value) => (typeof value === "object" ? String(value?._id || "") : String(value || ""));
-    const existingByCandidate = new Set(
-      requests.map((row) => getId(row.candidateId)).filter(Boolean)
-    );
-
-    const virtualRows = goToWorkCandidates
-      .filter((profile) => {
-        const id = getId(profile.userId);
-        return id && !existingByCandidate.has(id);
-      })
-      .map((profile) => ({
-        _id: `virtual-gtw-${getId(profile.userId)}`,
-        isVirtual: true,
-        status: "SUBMITTED",
-        placementStatus: "IN_QUEUE",
-        candidateId: profile.userId,
-        fullName: profile.userId?.fullName || "-",
-        contact: profile.contact || profile.userId?.phone || profile.userId?.email || "-",
-      }));
-
-    return [...requests, ...virtualRows];
-  }, [requests, goToWorkCandidates]);
 
   useEffect(() => {
     loadData();
@@ -146,23 +116,12 @@ const GoToWork = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this Shaqo Tag request?")) return;
-    try {
-      await deleteGoToWorkRequest(id);
-      await loadData();
-    } catch (err) {
-      alert(getErrorMessage(err, "Failed to delete request"));
-    }
-  };
-
   const handleCreate = async (event) => {
     event.preventDefault();
     try {
       setSaving(true);
       await submitGoToWorkRequest({
         ...createForm,
-        candidateId: createForm.candidateId || null,
         matchedCompanyId: createForm.matchedCompanyId || null,
         interviewDate: createForm.interviewDate || null,
       });
@@ -190,16 +149,6 @@ const GoToWork = () => {
     }
   };
 
-  const openCreateFromCandidate = (row) => {
-    setCreateForm((prev) => ({
-      ...prev,
-      candidateId: row.candidateId?._id || row.candidateId || "",
-      fullName: row.fullName || row.candidateId?.fullName || "",
-      contact: row.contact || row.candidateId?.phone || row.candidateId?.email || "",
-    }));
-    setOpenCreate(true);
-  };
-
   return (
     <div>
       <PageTitle title="Shaqo Tag" subtitle="Handle job-placement requests and company matching">
@@ -207,7 +156,7 @@ const GoToWork = () => {
       </PageTitle>
       <ExcelImportPanel
         title="Excel Import - Go To Work"
-        description="Required columns: contact/phone/email, status, matchedCompanyId, interviewDate, contractUrl/contract letter, notes."
+        description="Required columns: candidateId OR (contact/phone/email), status, matchedCompanyId, interviewDate, contractUrl/contract letter, notes."
         onImport={async (rows) => {
           const res = await importGoToWorkRequest(rows);
           await loadData();
@@ -239,56 +188,46 @@ const GoToWork = () => {
               </tr>
             </thead>
             <tbody>
-              {rows
+              {requests
                 .filter((request) => {
                   const key = search.toLowerCase();
                   if (!key) return true;
                   return (
-                    String(request.fullName || request.candidateId?.fullName || "").toLowerCase().includes(key) ||
-                    String(request.contact || request.candidateId?.phone || request.candidateId?.email || "").toLowerCase().includes(key)
+                    String(request.candidateId?.fullName || "").toLowerCase().includes(key) ||
+                    String(request.candidateId?.phone || request.candidateId?.email || "").toLowerCase().includes(key)
                   );
                 })
                 .map((request) => (
                 <tr key={request._id} className="border-t">
                   <td className="p-3">
                     <p className="font-medium">
-                      {request.fullName || request.candidateId?.fullName || "-"}
+                      {request.candidateId?.fullName || "-"}
                     </p>
-                    <p className="text-xs text-slate-500">{request.contact || request.candidateId?.phone || request.candidateId?.email || "-"}</p>
+                    <p className="text-xs text-slate-500">{request.candidateId?.phone || request.candidateId?.email || "-"}</p>
                   </td>
                   <td className="p-3">{request.status}</td>
                   <td className="p-3">{request.placementStatus || "-"}</td>
                   <td className="p-3">{request.matchedCompanyId?.name || "-"}</td>
                   <td className="p-3">{formatDateTime(request.interviewDate)}</td>
                   <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {request.isVirtual ? (
-                        <Button variant="secondary" onClick={() => openCreateFromCandidate(request)}>
-                          Create
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button variant="secondary" onClick={() => openManage(request)}>
+                        Manage
+                      </Button>
+                      {["SCREENING", "MATCHING", "INTERVIEW", "PLACED", "REJECTED"].map((status) => (
+                        <Button
+                          key={status}
+                          variant="secondary"
+                          onClick={() => handleQuickStatus(request._id, status)}
+                        >
+                          {status}
                         </Button>
-                      ) : (
-                        <>
-                          {quickStatuses.map((status) => (
-                            <Button
-                              key={status}
-                              variant="secondary"
-                              className="min-w-[115px]"
-                              onClick={() => handleQuickStatus(request._id, status)}
-                              disabled={request.status === status}
-                            >
-                              {status}
-                            </Button>
-                          ))}
-                          <Button variant="danger" className="min-w-[115px]" onClick={() => handleDelete(request._id)}>
-                            Delete
-                          </Button>
-                        </>
-                      )}
+                      ))}
                     </div>
                   </td>
                 </tr>
               ))}
-              {rows.length === 0 ? (
+              {requests.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-4 text-center text-slate-500">
                     No requests found
@@ -397,7 +336,12 @@ const GoToWork = () => {
 
       <Modal open={openCreate} title="Add Shaqo Tag" onClose={() => setOpenCreate(false)} footer={null} size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-3">
+            <Input
+              label="Candidate User ID (optional)"
+              value={createForm.candidateId}
+              onChange={(event) => setCreateForm((prev) => ({ ...prev, candidateId: event.target.value }))}
+            />
             <Input
               label="Full Name"
               value={createForm.fullName}

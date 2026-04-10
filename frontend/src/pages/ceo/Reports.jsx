@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import PageTitle from "../../components/common/PageTitle";
 import Loader from "../../components/ui/Loader";
 import { getExecutiveOverviewRequest, getOperationalInsightsRequest } from "../../api/insights.api";
-import { formatDate } from "../../utils/formatters";
 
 const Reports = () => {
   const [executive, setExecutive] = useState(null);
@@ -35,34 +34,6 @@ const Reports = () => {
       {!loading && executive && operations ? (
         <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           <div className="rounded-xl bg-white p-6 shadow">
-            <h2 className="text-lg font-semibold text-slate-900">Executive KPIs</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <div className="rounded-lg border border-slate-200 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Total Profiles</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">{executive.totals.candidateProfiles || 0}</p>
-              </div>
-              <div className="rounded-lg border border-slate-200 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Registered Today</p>
-                <p className="mt-1 text-2xl font-bold text-emerald-700">{executive.totals.candidateProfilesToday || 0}</p>
-              </div>
-              <div className="rounded-lg border border-slate-200 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Pending Approvals</p>
-                <p className="mt-1 text-2xl font-bold text-amber-700">{executive.totals.pendingApprovals || 0}</p>
-              </div>
-            </div>
-
-            <h2 className="mt-6 text-lg font-semibold text-slate-900">7-Day Registration Trend</h2>
-            <div className="mt-4 grid gap-2">
-              {(executive.trends?.registrationsLast7Days?.labels || []).map((label, index) => (
-                <div key={label} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                  <span className="text-slate-600">{formatDate(label)}</span>
-                  <span className="font-semibold text-slate-900">
-                    {executive.trends?.registrationsLast7Days?.values?.[index] || 0}
-                  </span>
-                </div>
-              ))}
-            </div>
-
             <h2 className="text-lg font-semibold text-slate-900">Portfolio Mix</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div className="rounded-lg bg-slate-50 p-4">

@@ -35,6 +35,19 @@ const Modal = ({
     }
   };
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [open]);
+
   if (!open) return null;
 
   // Size classes
@@ -47,7 +60,9 @@ const Modal = ({
   };
 
   // Animation classes
-  const animationClasses = open ? "opacity-100" : "opacity-0";
+  const animationClasses = open 
+    ? "animate-fadeIn scale-100 opacity-100" 
+    : "animate-fadeOut scale-95 opacity-0";
 
   return (
     <div 
@@ -57,19 +72,19 @@ const Modal = ({
     >
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black/35 transition-opacity duration-200 ${
+        className={`fixed inset-0 bg-black/50 transition-opacity duration-300 ${
           open ? "opacity-100" : "opacity-0"
         }`}
       />
 
       {/* Modal Container */}
-      <div className="flex min-h-screen items-center justify-center p-3 md:p-6">
+      <div className="flex min-h-screen items-start justify-center p-3 pt-6 md:p-6">
         {/* Modal Content */}
         <div 
           className={`
             relative w-full ${sizeClasses[size]} 
             ses-card rounded-2xl shadow-xl 
-            transition-opacity duration-200
+            transform transition-all duration-300 ease-out
             ${animationClasses}
           `}
         >
@@ -103,7 +118,7 @@ const Modal = ({
           )}
 
           {/* Body */}
-          <div className="max-h-[75vh] overflow-y-auto px-6 py-4">
+          <div className="max-h-[calc(100vh-150px)] overflow-y-auto px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />

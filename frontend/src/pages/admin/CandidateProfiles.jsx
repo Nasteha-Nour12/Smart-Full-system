@@ -18,15 +18,7 @@ import { formatDate, getErrorMessage } from "../../utils/formatters";
 const selectedPrograms = ["INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
 const hospitalityTypes = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE"];
 const trainingStatuses = ["PENDING", "SCHEDULED", "ATTENDING", "COMPLETED", "FAILED", "ABSENT"];
-const educationLevels = ["BACHELOR_DEGREE", "MASTER_DEGREE", "SECONDARY_LEVEL", "NONE"];
-const candidateStatusOptions = [
-  { value: "NEW", label: "NEW - Candidate cusub" },
-  { value: "PENDING_TRAINING", label: "PENDING_TRAINING - Sugaya tababar" },
-  { value: "ACTIVE", label: "ACTIVE - Diyaar ah" },
-  { value: "NOT_ELIGIBLE", label: "NOT_ELIGIBLE - Shuruud ma buuxin" },
-  { value: "OPPORTUNITY_LOST", label: "OPPORTUNITY_LOST - Fursad seegtay" },
-  { value: "REMOVED_FROM_QUEUE", label: "REMOVED_FROM_QUEUE - Laga saaray safka" },
-];
+const educationLevels = ["NONE", "BACHELOR_DEGREE"];
 
 const emptyForm = {
   userId: "",
@@ -40,7 +32,7 @@ const emptyForm = {
   otherSkills: "",
   selectedProgram: "INTERNSHIP",
   hospitalityType: "",
-  candidateStatus: "",
+  candidateStatus: "NEW",
   trainingStatus: "PENDING",
   trainingFee: 10,
   programFee: 0,
@@ -131,11 +123,12 @@ const CandidateProfiles = () => {
 
   const filteredProfiles = useMemo(() => {
     const key = filters.search.trim().toLowerCase();
+    if (!key) return profiles;
     return profiles.filter((p) => {
       const idNo = String(p.idNo || "").toLowerCase();
       const name = String(p.userId?.fullName || "").toLowerCase();
       const contact = String(p.contact || p.userId?.phone || p.userId?.email || "").toLowerCase();
-      return !key || idNo.includes(key) || name.includes(key) || contact.includes(key);
+      return idNo.includes(key) || name.includes(key) || contact.includes(key);
     });
   }, [profiles, filters.search]);
 
@@ -228,7 +221,7 @@ const CandidateProfiles = () => {
 
       <ExcelImportPanel
         title="Excel Import - Candidate Registration"
-        description="Columns: fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram, hospitalityType, candidateStatus, trainingFee, programFee. ID No auto-generates."
+        description="Columns: idNo, fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram, hospitalityType, candidateStatus, trainingFee, programFee."
         onImport={async (rows) => {
           const res = await importCandidateProfilesRequest(rows);
           await load();
@@ -286,7 +279,7 @@ const CandidateProfiles = () => {
           <label className="mb-1 block text-sm font-semibold text-slate-700">Training Status</label>
           <select
             className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-            value={filters.trainingStatus || ""}
+            value={filters.trainingStatus}
             onChange={(e) => setFilters((prev) => ({ ...prev, trainingStatus: e.target.value }))}
           >
             <option value="">All</option>
@@ -366,14 +359,13 @@ const CandidateProfiles = () => {
 
       <Modal open={openForm} title="Candidate Registration" onClose={() => setOpenForm(false)} footer={null} size="xl">
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-1">
+          <div className="grid gap-3 md:grid-cols-2">
             <Input
-              label="ID No"
-              value={form.idNo}
-              onChange={() => {}}
-              placeholder="Auto-generated (CAN...)"
-              disabled
+              label="Candidate User ID (optional)"
+              value={form.userId}
+              onChange={(e) => handleFormChange({ userId: e.target.value })}
             />
+            <Input label="ID No" value={form.idNo} onChange={(e) => handleFormChange({ idNo: e.target.value })} required />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <Input
@@ -419,13 +411,7 @@ const CandidateProfiles = () => {
                 <option value="">Select level</option>
                 {educationLevels.map((level) => (
                   <option key={level} value={level}>
-                    {level === "BACHELOR_DEGREE"
-                      ? "Bachelor Degree"
-                      : level === "MASTER_DEGREE"
-                        ? "Master Degree"
-                        : level === "SECONDARY_LEVEL"
-                          ? "Secondary Level"
-                          : "Midna"}
+                    {level}
                   </option>
                 ))}
               </select>
@@ -492,27 +478,11 @@ const CandidateProfiles = () => {
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Candidate Status</label>
-              <select
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-                value={form.candidateStatus}
-                onChange={(e) => handleFormChange({ candidateStatus: e.target.value })}
-                required
-              >
-                <option value="" disabled>
-                  Select candidate status (what this candidate can do)
-                </option>
-                {candidateStatusOptions.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-slate-500">
-                Status-kan ayaa go'aaminaya in candidate-ku heli karo training/internship/go-to-work.
-              </p>
-            </div>
+            <Input
+              label="Candidate Status"
+              value={form.candidateStatus}
+              onChange={(e) => handleFormChange({ candidateStatus: e.target.value.toUpperCase() })}
+            />
             <Input
               label="Training Fee (USD)"
               type="number"

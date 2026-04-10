@@ -44,7 +44,7 @@ const Sidebar = ({ open, onClose }) => {
             <NavItem to="/admin/internships" label={t("internships")} icon={<BriefcaseBusiness className="h-4 w-4" />} onClick={onClose} />
             <NavItem to="/admin/go-to-work" label={t("go_to_work")} icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
             <NavItem to="/admin/documents" label={t("documents")} icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/reports" label="Reports" icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
+            <NavItem to="/admin/excel-import" label={t("excel_import")} icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
             <NavItem to="/admin/settings" label={t("settings")} icon={<ShieldCheck className="h-4 w-4" />} onClick={onClose} />
           </>
         ) : null}

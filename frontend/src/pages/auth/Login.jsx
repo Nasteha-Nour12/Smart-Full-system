@@ -53,7 +53,7 @@ const Login = () => {
           <Input
             name="identifier"
             type="text"
-            placeholder="Email or phone number"
+            placeholder="Email"
             value={form.identifier}
             onChange={handleChange}
             className="border-white bg-white text-slate-900 placeholder:text-slate-500 focus:border-cyan-400 focus:ring-cyan-100"

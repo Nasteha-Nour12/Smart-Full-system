@@ -8,7 +8,6 @@ import { getGoToWorkRequests } from "../../api/goToWork.api";
 import { getInternshipsRequest } from "../../api/internships.api";
 import { getUsersRequest } from "../../api/user.api";
 import { getTrainingProgramsRequest } from "../../api/trainingPrograms.api";
-import { getTodayRegistrationsRequest } from "../../api/insights.api";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -18,7 +17,6 @@ const AdminDashboard = () => {
     internships: 0,
     goToWork: 0,
     trainingPrograms: 0,
-    candidateProfilesToday: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +24,7 @@ const AdminDashboard = () => {
     const loadStats = async () => {
       try {
         setLoading(true);
-        const [users, companies, candidateProfiles, internships, goToWork, trainingPrograms, todayRegs] =
+        const [users, companies, candidateProfiles, internships, goToWork, trainingPrograms] =
           await Promise.all([
             getUsersRequest(),
             getCompaniesRequest(),
@@ -34,7 +32,6 @@ const AdminDashboard = () => {
             getInternshipsRequest(),
             getGoToWorkRequests(),
             getTrainingProgramsRequest(),
-            getTodayRegistrationsRequest(),
           ]);
 
         setStats({
@@ -44,7 +41,6 @@ const AdminDashboard = () => {
           internships: internships.data?.length || 0,
           goToWork: goToWork.data?.length || 0,
           trainingPrograms: trainingPrograms.data?.length || 0,
-          candidateProfilesToday: todayRegs.data?.candidateProfilesToday || 0,
         });
       } finally {
         setLoading(false);
@@ -59,11 +55,10 @@ const AdminDashboard = () => {
       <PageTitle title="Admin Dashboard" subtitle="Platform-wide summary across all modules" />
       {loading ? <Loader /> : null}
       {!loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <StatCard label="Users" value={stats.users} />
           <StatCard label="Companies" value={stats.companies} />
           <StatCard label="Candidate Profiles" value={stats.candidateProfiles} />
-          <StatCard label="Registered Today" value={stats.candidateProfilesToday} />
           <StatCard label="Training Programs" value={stats.trainingPrograms} />
           <StatCard label="Internships" value={stats.internships} />
           <StatCard label="Go To Work Requests" value={stats.goToWork} />
