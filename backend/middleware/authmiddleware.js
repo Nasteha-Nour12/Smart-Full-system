@@ -6,7 +6,13 @@ import { jwt_secret } from "../config/config.js";
  * ✅ Verify JWT and attach user payload to req.user
  */
 export const authenticate = (req, res, next) => {
-  const token = req.cookies?.token; // cookie must be set from login
+  const bearerHeader = req.headers?.authorization || req.headers?.Authorization;
+  const bearerToken =
+    typeof bearerHeader === "string" && bearerHeader.startsWith("Bearer ")
+      ? bearerHeader.slice(7).trim()
+      : null;
+
+  const token = req.cookies?.token || bearerToken; // accept cookie or bearer token
   if (!token) {
     return res.status(401).json({ message: "Access denied. please login " });
   }

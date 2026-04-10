@@ -9,6 +9,11 @@ export const registerRequest = async (data) => {
 // LOGIN
 export const loginRequest = async (data) => {
   const res = await api.post("/users/login", data);
+  const token = res?.data?.accessToken;
+  if (token) {
+    localStorage.setItem("smart-ses-token", token);
+    localStorage.setItem("token", token);
+  }
   return res.data;
 };
 
@@ -20,6 +25,12 @@ export const updateMeRequest = async (data) => {
 
 // LOGOUT (local)
 export const logoutRequest = async () => {
+  try {
+    await api.post("/users/logout");
+  } catch {
+    // Ignore logout API failures and clear local session anyway.
+  }
+  localStorage.removeItem("smart-ses-token");
   localStorage.removeItem("token");
   return { success: true };
 };
