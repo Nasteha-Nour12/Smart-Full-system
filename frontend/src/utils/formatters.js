@@ -21,12 +21,5 @@ export const formatCurrency = (value) => {
   }).format(amount);
 };
 
-export const getErrorMessage = (error, fallback = "Something went wrong") => {
-  const data = error?.response?.data;
-  if (data?.message) return data.message;
-
-  const firstFieldError = Object.values(data?.fieldErrors || {}).flat()?.[0];
-  if (firstFieldError) return firstFieldError;
-
-  return fallback;
-};
+export const getErrorMessage = (error, fallback = "Something went wrong") =>
+  error?.response?.data?.message || fallback;

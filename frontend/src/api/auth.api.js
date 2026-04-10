@@ -20,6 +20,6 @@ export const updateMeRequest = async (data) => {
 
 // LOGOUT (local)
 export const logoutRequest = async () => {
-  const res = await api.post("/users/logout");
-  return res.data;
+  localStorage.removeItem("token");
+  return { success: true };
 };
