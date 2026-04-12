@@ -1,31 +1,49 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
+name: Smart App CI/CD
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  build:
-
+  deploy:
     runs-on: self-hosted
 
     strategy:
       matrix:
         node-version: [22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: pm2 start npm --name "smart" -- start || pm2 restart "smart"
+      # 1. Clone latest code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Build project (optional haddii aad leedahay build)
+      - name: Build project
+        run: npm run build --if-present
+
+      # 5. Stop old process (avoid duplicates)
+      - name: Stop old PM2 app
+        run: pm2 delete smart || true
+
+      # 6. Start app with PM2
+      - name: Start app with PM2
+        run: pm2 start npm --name "smart" -- start
+
+      # 7. Save PM2 state (auto restart haddii server reboot dhaco)
+      - name: Save PM2
+        run: pm2 save
+
+      # 8. Startup PM2 (only first time muhiim ah)
+      - name: Setup PM2 startup
+        run: pm2 startup || true
