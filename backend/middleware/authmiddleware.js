@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import { jwt_secret } from "../config/config.js";
 
 
@@ -19,7 +20,11 @@ export const authenticate = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, jwt_secret);
-    const userId = decoded.id || decoded._id || decoded.sub;
+    const userIdRaw = decoded.id || decoded._id || decoded.sub;
+    const userId = String(userIdRaw || "").trim();
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({ message: "Invalid token payload: missing user id" });
+    }
 
     req.user = {
       ...decoded,

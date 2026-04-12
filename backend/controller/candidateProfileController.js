@@ -1,4 +1,5 @@
 import CandidateProfile from "../model/candidateProfile.js";
+import mongoose from "mongoose";
 import User from "../model/User.js";
 import TrainingProgram from "../model/TrainingProgram.js";
 import Internship from "../model/Internship.js";
@@ -7,6 +8,16 @@ import Company from "../model/Company.js";
 import { getField, toSkillsArray } from "../utils/importHelpers.js";
 import { applyCandidateProgramLogic } from "../utils/candidateProgramLogic.js";
 import { ensurePrefixedIdNo } from "../utils/idGenerator.js";
+
+const normalizeObjectId = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const lowered = raw.toLowerCase();
+  if (lowered === "null" || lowered === "undefined") return null;
+  return mongoose.Types.ObjectId.isValid(raw) ? raw : null;
+};
+
+const getAuthUserId = (req) => normalizeObjectId(req.user?.id || req.user?._id || req.user?.sub);
 
 const ensureTrainingForCandidate = async (profile) => {
   const selected = String(profile.selectedProgram || "").toUpperCase();
@@ -118,7 +129,8 @@ const ensureProgramPlacement = async (profile) => {
 };
 
 const resolveUser = async ({ userId, contact, email, phone, fullName }) => {
-  if (userId) return userId;
+  const normalizedUserId = normalizeObjectId(userId);
+  if (normalizedUserId) return normalizedUserId;
   const lookup = [];
   if (email) lookup.push({ email: String(email).toLowerCase() });
   if (phone) lookup.push({ phone: String(phone).trim() });
@@ -257,7 +269,10 @@ const parseDocumentCell = (value) => {
 ======================================================= */
 export const getMyProfile = async (req, res) => {
   try {
-    const profile = await CandidateProfile.findOne({ userId: req.user.id }).populate(
+    const authUserId = getAuthUserId(req);
+    if (!authUserId) return res.status(401).json({ success: false, message: "Invalid session. Please login again." });
+
+    const profile = await CandidateProfile.findOne({ userId: authUserId }).populate(
       "userId",
       "fullName email role phone"
     );
@@ -281,11 +296,14 @@ export const getMyProfile = async (req, res) => {
 ======================================================= */
 export const upsertMyProfile = async (req, res) => {
   try {
-    const payload = withDocumentStatuses(withProgramLogic({ ...req.body, userId: req.user.id }));
+    const authUserId = getAuthUserId(req);
+    if (!authUserId) return res.status(401).json({ success: false, message: "Invalid session. Please login again." });
+
+    const payload = withDocumentStatuses(withProgramLogic({ ...req.body, userId: authUserId }));
     payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
 
     const profile = await CandidateProfile.findOneAndUpdate(
-      { userId: req.user.id },
+      { userId: authUserId },
       payload,
       { new: true, upsert: true, runValidators: true }
     );
@@ -307,10 +325,13 @@ export const upsertMyProfile = async (req, res) => {
 ======================================================= */
 export const updateMyProfile = async (req, res) => {
   try {
+    const authUserId = getAuthUserId(req);
+    if (!authUserId) return res.status(401).json({ success: false, message: "Invalid session. Please login again." });
+
     const payload = withDocumentStatuses(withProgramLogic(req.body));
     payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
     const profile = await CandidateProfile.findOneAndUpdate(
-      { userId: req.user.id },
+      { userId: authUserId },
       payload,
       { new: true, runValidators: true }
     );
@@ -339,13 +360,16 @@ export const updateMyProfile = async (req, res) => {
 ======================================================= */
 export const addSkill = async (req, res) => {
   try {
+    const authUserId = getAuthUserId(req);
+    if (!authUserId) return res.status(401).json({ success: false, message: "Invalid session. Please login again." });
+
     const { name, level } = req.body;
 
     if (!name) {
       return res.status(400).json({ success: false, message: "Skill name is required" });
     }
 
-    const profile = await CandidateProfile.findOne({ userId: req.user.id });
+    const profile = await CandidateProfile.findOne({ userId: authUserId });
     if (!profile) {
       return res.status(404).json({ success: false, message: "Profile not found" });
     }
@@ -380,9 +404,12 @@ export const addSkill = async (req, res) => {
 ======================================================= */
 export const removeSkill = async (req, res) => {
   try {
+    const authUserId = getAuthUserId(req);
+    if (!authUserId) return res.status(401).json({ success: false, message: "Invalid session. Please login again." });
+
     const { skillId } = req.params;
 
-    const profile = await CandidateProfile.findOne({ userId: req.user.id });
+    const profile = await CandidateProfile.findOne({ userId: authUserId });
     if (!profile) {
       return res.status(404).json({ success: false, message: "Profile not found" });
     }
@@ -434,7 +461,10 @@ export const getAllProfiles = async (req, res) => {
 ======================================================= */
 export const getProfileByUserId = async (req, res) => {
   try {
-    const profile = await CandidateProfile.findOne({ userId: req.params.userId }).populate(
+    const userId = normalizeObjectId(req.params.userId);
+    if (!userId) return res.status(400).json({ success: false, message: "Invalid userId" });
+
+    const profile = await CandidateProfile.findOne({ userId }).populate(
       "userId",
       "fullName email role phone"
     );
@@ -454,7 +484,10 @@ export const getProfileByUserId = async (req, res) => {
 ======================================================= */
 export const deleteProfileByUserId = async (req, res) => {
   try {
-    const deleted = await CandidateProfile.findOneAndDelete({ userId: req.params.userId });
+    const userId = normalizeObjectId(req.params.userId);
+    if (!userId) return res.status(400).json({ success: false, message: "Invalid userId" });
+
+    const deleted = await CandidateProfile.findOneAndDelete({ userId });
 
     if (!deleted) {
       return res.status(404).json({ success: false, message: "Profile not found" });
