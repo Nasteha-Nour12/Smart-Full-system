@@ -49,7 +49,7 @@ app.use(
 );
 
 app.get("/", (_req, res) => {
-  res.status(200).json({ ok: true, message: "API is running" });
+  res.status(200).json({ ok: true, message: "System is running" });
 });
 
 app.get("/api/health", (_req, res) => {
