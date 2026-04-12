@@ -29,7 +29,7 @@ export const applyCandidateProgramLogic = (payload) => {
     payload.mandatoryTrainingStatus || payload.trainingStatus || TRAINING_STATUS.PENDING
   ).toUpperCase();
 
-  next.selectedProgram = selectedProgram || SELECTED_PROGRAM.CANDIDATE;
+  next.selectedProgram = selectedProgram || SELECTED_PROGRAM.VISITOR;
   next.hospitalityType = hospitalityType || "";
   next.mandatoryTrainingStatus = mandatoryTrainingStatus;
   next.trainingStatus = mandatoryTrainingStatus;

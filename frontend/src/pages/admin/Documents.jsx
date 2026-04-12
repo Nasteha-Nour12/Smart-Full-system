@@ -322,6 +322,7 @@ const Documents = () => {
               status={form.cvStatus}
               onUpload={(url) => setForm((p) => ({ ...p, cvUrl: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, cvStatus: value }))}
+              onDelete={() => setForm((p) => ({ ...p, cvUrl: "", cvStatus: "MISSING" }))}
             />
             <DocumentRow
               label="Cover Letter"
@@ -329,6 +330,7 @@ const Documents = () => {
               status={form.coverLetterStatus}
               onUpload={(url) => setForm((p) => ({ ...p, coverLetterUrl: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, coverLetterStatus: value }))}
+              onDelete={() => setForm((p) => ({ ...p, coverLetterUrl: "", coverLetterStatus: "MISSING" }))}
             />
             <DocumentRow
               label="National ID"
@@ -336,6 +338,7 @@ const Documents = () => {
               status={form.nationalIdStatus}
               onUpload={(url) => setForm((p) => ({ ...p, idUrl: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, nationalIdStatus: value }))}
+              onDelete={() => setForm((p) => ({ ...p, idUrl: "", nationalIdStatus: "MISSING" }))}
             />
             <DocumentRow
               label="Secondary Certificate"
@@ -343,6 +346,9 @@ const Documents = () => {
               status={form.secondaryCertificateStatus}
               onUpload={(url) => setForm((p) => ({ ...p, secondaryCertificateUrl: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, secondaryCertificateStatus: value }))}
+              onDelete={() =>
+                setForm((p) => ({ ...p, secondaryCertificateUrl: "", secondaryCertificateStatus: "MISSING" }))
+              }
             />
             <DocumentRow
               label="University Certificate"
@@ -350,6 +356,9 @@ const Documents = () => {
               status={form.universityCertificateStatus}
               onUpload={(url) => setForm((p) => ({ ...p, universityCertificateUrl: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, universityCertificateStatus: value }))}
+              onDelete={() =>
+                setForm((p) => ({ ...p, universityCertificateUrl: "", universityCertificateStatus: "MISSING" }))
+              }
             />
             <DocumentRow
               label="Passport Photo 1"
@@ -357,6 +366,7 @@ const Documents = () => {
               status={form.passportPhoto1Status}
               onUpload={(url) => setForm((p) => ({ ...p, passportPhoto1Url: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, passportPhoto1Status: value }))}
+              onDelete={() => setForm((p) => ({ ...p, passportPhoto1Url: "", passportPhoto1Status: "MISSING" }))}
             />
             <DocumentRow
               label="Passport Photo 2"
@@ -364,6 +374,7 @@ const Documents = () => {
               status={form.passportPhoto2Status}
               onUpload={(url) => setForm((p) => ({ ...p, passportPhoto2Url: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, passportPhoto2Status: value }))}
+              onDelete={() => setForm((p) => ({ ...p, passportPhoto2Url: "", passportPhoto2Status: "MISSING" }))}
             />
             <DocumentRow
               label="Contract Letter"
@@ -371,6 +382,7 @@ const Documents = () => {
               status={form.contractLetterStatus}
               onUpload={(url) => setForm((p) => ({ ...p, contractLetterUrl: url }))}
               onStatus={(value) => setForm((p) => ({ ...p, contractLetterStatus: value }))}
+              onDelete={() => setForm((p) => ({ ...p, contractLetterUrl: "", contractLetterStatus: "MISSING" }))}
             />
 
             <div className="flex justify-end">
@@ -385,9 +397,9 @@ const Documents = () => {
   );
 };
 
-const DocumentRow = ({ label, url, status, onUpload, onStatus }) => (
+const DocumentRow = ({ label, url, status, onUpload, onStatus, onDelete }) => (
   <div className="grid gap-4 rounded-xl border border-slate-200 p-4 lg:grid-cols-[1fr_260px]">
-    <FileUploadField label={label} value={url} onUploaded={onUpload} />
+    <FileUploadField label={label} value={url} onUploaded={onUpload} onDelete={onDelete} />
     <div>
       <label className="mb-1 block text-sm font-semibold text-slate-700">Status</label>
       <select

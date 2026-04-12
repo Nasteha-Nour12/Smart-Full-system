@@ -9,6 +9,7 @@ const FileUploadField = ({
   accept,
   buttonLabel = "Upload File",
   onUploaded,
+  onDelete,
   helperText,
 }) => {
   const inputRef = useRef(null);
@@ -30,6 +31,11 @@ const FileUploadField = ({
     }
   };
 
+  const openInBrowser = () => {
+    if (!value) return;
+    window.open(value, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="rounded-lg border border-slate-200 p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -37,14 +43,13 @@ const FileUploadField = ({
           <p className="text-sm font-medium text-slate-800">{label}</p>
           {helperText ? <p className="mt-1 text-xs text-slate-500">{helperText}</p> : null}
           {value ? (
-            <a
-              href={value}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={openInBrowser}
               className="mt-2 inline-block text-sm text-blue-600 underline"
             >
-              View uploaded file
-            </a>
+              View in browser
+            </button>
           ) : (
             <p className="mt-2 text-sm text-slate-400">No file uploaded yet</p>
           )}
@@ -65,6 +70,14 @@ const FileUploadField = ({
             loading={uploading}
           >
             {buttonLabel}
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={() => onDelete?.()}
+            disabled={!value}
+          >
+            Delete
           </Button>
         </div>
       </div>

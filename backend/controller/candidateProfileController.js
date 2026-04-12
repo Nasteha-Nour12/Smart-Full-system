@@ -461,10 +461,12 @@ export const getAllProfiles = async (req, res) => {
 ======================================================= */
 export const getProfileByUserId = async (req, res) => {
   try {
-    const userId = normalizeObjectId(req.params.userId);
-    if (!userId) return res.status(400).json({ success: false, message: "Invalid userId" });
+    const lookupId = normalizeObjectId(req.params.userId);
+    if (!lookupId) return res.status(400).json({ success: false, message: "Invalid id" });
 
-    const profile = await CandidateProfile.findOne({ userId }).populate(
+    const profile = await CandidateProfile.findOne({
+      $or: [{ userId: lookupId }, { _id: lookupId }],
+    }).populate(
       "userId",
       "fullName email role phone"
     );
@@ -484,10 +486,12 @@ export const getProfileByUserId = async (req, res) => {
 ======================================================= */
 export const deleteProfileByUserId = async (req, res) => {
   try {
-    const userId = normalizeObjectId(req.params.userId);
-    if (!userId) return res.status(400).json({ success: false, message: "Invalid userId" });
+    const lookupId = normalizeObjectId(req.params.userId);
+    if (!lookupId) return res.status(400).json({ success: false, message: "Invalid id" });
 
-    const deleted = await CandidateProfile.findOneAndDelete({ userId });
+    const deleted = await CandidateProfile.findOneAndDelete({
+      $or: [{ userId: lookupId }, { _id: lookupId }],
+    });
 
     if (!deleted) {
       return res.status(404).json({ success: false, message: "Profile not found" });
@@ -543,7 +547,7 @@ export const upsertProfileByAdmin = async (req, res) => {
 
     await ensureTrainingForCandidate(profile);
     await ensureProgramPlacement(profile);
-    res.status(200).json({ success: true, message: "Candidate registration saved", data: profile });
+    res.status(200).json({ success: true, message: "Visitor registration saved", data: profile });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -627,7 +631,7 @@ export const importProfilesByAdmin = async (req, res) => {
           educationLevel: String(getField(row, ["educationLevel", "education level"])).trim(),
           faculty: String(getField(row, ["faculty"])).trim(),
           otherSkills: toSkillsArray(getField(row, ["otherSkills", "other skills"])),
-          selectedProgram: String(getField(row, ["selectedProgram", "selected program"], "CANDIDATE")).toUpperCase(),
+          selectedProgram: String(getField(row, ["selectedProgram", "selected program"], "VISITOR")).toUpperCase(),
           hospitalityType: String(getField(row, ["hospitalityType", "hospitality type"], "")).toUpperCase(),
           candidateStatus: String(getField(row, ["candidateStatus", "candidate status"], "NEW")).toUpperCase(),
           trainingStatus: String(getField(row, ["trainingStatus", "training status"], "PENDING")).toUpperCase(),
@@ -671,7 +675,7 @@ export const importProfilesByAdmin = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: `Imported ${created.length} candidate rows`,
+      message: `Imported ${created.length} visitor rows`,
       data: created,
       failed,
     });

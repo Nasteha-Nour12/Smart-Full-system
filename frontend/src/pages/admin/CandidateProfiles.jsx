@@ -16,7 +16,7 @@ import {
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 import { addNotification } from "../../utils/notifications";
 
-const selectedPrograms = ["CANDIDATE", "INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
+const selectedPrograms = ["VISITOR", "INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
 const hospitalityTypes = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE"];
 const trainingStatuses = ["PENDING", "SCHEDULED", "ATTENDING", "COMPLETED", "FAILED", "ABSENT"];
 const educationLevels = ["NONE", "BACHELOR_DEGREE"];
@@ -30,7 +30,7 @@ const emptyForm = {
   educationLevel: "",
   faculty: "",
   otherSkills: "",
-  selectedProgram: "CANDIDATE",
+  selectedProgram: "VISITOR",
   hospitalityType: "",
   candidateStatus: "NEW",
   trainingStatus: "PENDING",
@@ -94,7 +94,7 @@ const CandidateProfiles = () => {
     district: "",
     educationLevel: "",
     faculty: "",
-    selectedProgram: "CANDIDATE",
+    selectedProgram: "",
     trainingStatus: "",
   });
 
@@ -132,6 +132,8 @@ const CandidateProfiles = () => {
     });
   }, [profiles, filters.search]);
 
+  const getProfileTargetId = (profile) => profile?.userId?._id || profile?.userId || profile?._id;
+
   const openCreate = () => {
     setForm(emptyForm);
     setOpenForm(true);
@@ -150,7 +152,7 @@ const CandidateProfiles = () => {
         educationLevel: p.educationLevel || p.education || "",
         faculty: p.faculty || "",
         otherSkills: (p.skills || []).map((s) => s.name).join(", "),
-        selectedProgram: p.selectedProgram || "CANDIDATE",
+        selectedProgram: p.selectedProgram || "VISITOR",
         hospitalityType: p.hospitalityType || "",
         candidateStatus: p.candidateStatus || "NEW",
         trainingStatus: p.trainingStatus || "PENDING",
@@ -178,8 +180,8 @@ const CandidateProfiles = () => {
     try {
       setSaving(true);
       await deleteCandidateProfileByUserIdRequest(userId);
-      toast.success("Candidate profile deleted");
-      addNotification({ title: "Candidate Deleted", message: "Candidate profile was deleted.", type: "warning" });
+      toast.success("Visitor profile deleted");
+      addNotification({ title: "Visitor Deleted", message: "Visitor profile was deleted.", type: "warning" });
       await load();
       setSelected(null);
     } catch (err) {
@@ -202,8 +204,8 @@ const CandidateProfiles = () => {
         otherSkills: form.otherSkills,
       });
       await upsertCandidateProfileByAdminRequest(payload);
-      toast.success("Candidate registration saved");
-      addNotification({ title: "Candidate Saved", message: "Candidate profile was saved successfully.", type: "success" });
+      toast.success("Visitor registration saved");
+      addNotification({ title: "Visitor Saved", message: "Visitor profile was saved successfully.", type: "success" });
       setOpenForm(false);
       setForm(emptyForm);
       await load();
@@ -216,12 +218,12 @@ const CandidateProfiles = () => {
 
   return (
     <div>
-      <PageTitle title="Candidate Profiles" subtitle="Register, filter, and manage candidate records">
-        <Button onClick={openCreate}>Register Candidate</Button>
+      <PageTitle title="Visitor Profiles" subtitle="Register, filter, and manage visitor records">
+        <Button onClick={openCreate}>Register Visitor</Button>
       </PageTitle>
 
       <ExcelImportPanel
-        title="Excel Import - Candidate Registration"
+        title="Excel Import - Visitor Registration"
         description="Columns: idNo(optional), fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram, hospitalityType, candidateStatus, trainingFee, programFee."
         onImport={async (rows) => {
           const res = await importCandidateProfilesRequest(rows);
@@ -304,6 +306,7 @@ const CandidateProfiles = () => {
                 <th className="p-3 text-left">ID No</th>
                 <th className="p-3 text-left">Name</th>
                 <th className="p-3 text-left">Contact</th>
+                <th className="p-3 text-left">Registration Date</th>
                 <th className="p-3 text-left">Program</th>
                 <th className="p-3 text-left">Training</th>
                 <th className="p-3 text-left">Visitor Status</th>
@@ -316,6 +319,7 @@ const CandidateProfiles = () => {
                   <td className="p-3 font-medium text-slate-800">{p.idNo || "-"}</td>
                   <td className="p-3">{p.userId?.fullName || "-"}</td>
                   <td className="p-3 text-slate-600">{p.contact || p.userId?.email || p.userId?.phone || "-"}</td>
+                  <td className="p-3 text-slate-600">{formatDate(p.createdAt)}</td>
                   <td className="p-3">{p.selectedProgram || "-"}</td>
                   <td className="p-3">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadge(p.trainingStatus)}`}>
@@ -329,15 +333,15 @@ const CandidateProfiles = () => {
                   </td>
                   <td className="p-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="secondary" onClick={() => openProfile(p.userId?._id || p.userId)}>
+                      <Button variant="secondary" onClick={() => openProfile(getProfileTargetId(p))}>
                         View
                       </Button>
-                      <Button variant="secondary" onClick={() => openEdit(p.userId?._id || p.userId)}>
+                      <Button variant="secondary" onClick={() => openEdit(getProfileTargetId(p))}>
                         Edit
                       </Button>
                       <Button
                         variant="danger"
-                        onClick={() => handleDelete(p.userId?._id || p.userId)}
+                        onClick={() => handleDelete(getProfileTargetId(p))}
                         loading={saving}
                       >
                         Delete
@@ -348,8 +352,8 @@ const CandidateProfiles = () => {
               ))}
               {filteredProfiles.length === 0 ? (
                 <tr>
-                  <td className="p-4 text-center text-slate-500" colSpan={7}>
-                    No candidate profiles found
+                  <td className="p-4 text-center text-slate-500" colSpan={8}>
+                    No visitor profiles found
                   </td>
                 </tr>
               ) : null}
@@ -358,18 +362,23 @@ const CandidateProfiles = () => {
         </div>
       ) : null}
 
-      <Modal open={openForm} title="Candidate Registration" onClose={() => setOpenForm(false)} footer={null} size="xl">
-        <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-1">
-            <Input label="ID No" value={form.idNo || ""} placeholder="Auto generated (CAN001...)" disabled />
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
+      <Modal open={openForm} title="Visitor Registration" onClose={() => setOpenForm(false)} footer={null} size="lg">
+        <form onSubmit={handleSave} className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
             <Input
               label="Full Name"
               value={form.fullName}
               onChange={(e) => handleFormChange({ fullName: e.target.value })}
               required
             />
+            <Input
+              label="Contact"
+              value={form.contact}
+              onChange={(e) => handleFormChange({ contact: e.target.value })}
+              required
+            />
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Gender</label>
               <select
@@ -382,14 +391,6 @@ const CandidateProfiles = () => {
                 <option value="OTHER">OTHER</option>
               </select>
             </div>
-            <Input
-              label="Contact"
-              value={form.contact}
-              onChange={(e) => handleFormChange({ contact: e.target.value })}
-              required
-            />
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
             <Input
               label="District"
               value={form.district}
@@ -420,12 +421,7 @@ const CandidateProfiles = () => {
               disabled={form.educationLevel === "NONE"}
             />
           </div>
-          <Input
-            label="Other Skills (comma separated)"
-            value={form.otherSkills}
-            onChange={(e) => handleFormChange({ otherSkills: e.target.value })}
-          />
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Selected Program</label>
               <select
@@ -459,60 +455,22 @@ const CandidateProfiles = () => {
             ) : (
               <Input label="Hospitality Type" value="N/A" disabled />
             )}
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Training Status</label>
-              <select
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-                value={form.trainingStatus}
-                onChange={(e) => handleFormChange({ trainingStatus: e.target.value })}
-              >
-                {trainingStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Input label="ID No" value={form.idNo || ""} placeholder="Auto generated (VIS001...)" disabled />
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <Input
-              label="Candidate Status"
-              value={form.candidateStatus}
-              onChange={(e) => handleFormChange({ candidateStatus: e.target.value.toUpperCase() })}
-            />
-            <Input
-              label="Training Fee (USD)"
-              type="number"
-              min="0"
-              value={form.trainingFee}
-              onChange={(e) => handleFormChange({ trainingFee: Number(e.target.value || 0) })}
-            />
-            <Input
-              label="Program Fee (USD)"
-              type="number"
-              min="0"
-              value={form.programFee}
-              onChange={(e) => handleFormChange({ programFee: Number(e.target.value || 0) })}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Notes / Remarks</label>
-            <textarea
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-              rows={4}
-              value={form.notes}
-              onChange={(e) => handleFormChange({ notes: e.target.value })}
-            />
-          </div>
+          <Input
+            label="Other Skills (optional)"
+            value={form.otherSkills}
+            onChange={(e) => handleFormChange({ otherSkills: e.target.value })}
+          />
           <div className="flex justify-end">
             <Button type="submit" loading={saving}>
-              Save Candidate
+              Save Visitor
             </Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!selected} title="Candidate Profile" onClose={() => setSelected(null)} footer={null}>
+      <Modal open={!!selected} title="Visitor Profile" onClose={() => setSelected(null)} footer={null}>
         {selected ? (
           <div className="space-y-4">
             <div className="grid gap-3 md:grid-cols-2">

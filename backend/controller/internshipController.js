@@ -11,6 +11,30 @@ const PHONE_REGEX = /^\+?\d{7,15}$/;
 const canAssignCandidate = (role) =>
   ["ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"].includes(role);
 
+const promoteToGoToWorkAfterCompletion = async (candidateId) => {
+  if (!candidateId) return;
+
+  await GoToWork.findOneAndUpdate(
+    { candidateId },
+    {
+      $setOnInsert: {
+        candidateId,
+        status: "SUBMITTED",
+        readinessStatus: "READY",
+        interviewStatus: "PENDING",
+        placementStatus: "IN_QUEUE",
+        notes: "Auto-created after internship completion",
+      },
+    },
+    { upsert: true, new: true }
+  );
+
+  await CandidateProfile.findOneAndUpdate(
+    { userId: candidateId },
+    { selectedProgram: "GO_TO_WORK", assignedProgram: "GO_TO_WORK", candidateStatus: "ACTIVE" }
+  );
+};
+
 const resolveCandidate = async ({ candidateId, contact, email, phone, fullName }) => {
   if (candidateId) return candidateId;
 
@@ -232,6 +256,9 @@ export const importInternships = async (req, res) => {
         if (existing) throw new Error("Duplicate internship row for this candidate");
 
         const doc = await Internship.create(payload);
+        if (String(doc.status || "").toUpperCase() === "COMPLETED") {
+          await promoteToGoToWorkAfterCompletion(candidateId);
+        }
         created.push(doc);
       } catch (error) {
         failed.push({ row: i + 1, message: error.message });
@@ -318,6 +345,10 @@ export const updateInternship = async (req, res) => {
       return res.status(404).json({ success: false, message: "Internship not found" });
     }
 
+    if (String(internship.status || "").toUpperCase() === "COMPLETED" && internship.candidateId) {
+      await promoteToGoToWorkAfterCompletion(internship.candidateId);
+    }
+
     res.json({
       success: true,
       message: "Internship updated successfully",
@@ -361,21 +392,7 @@ export const updateInternshipStatus = async (req, res) => {
     );
 
     if (status === "COMPLETED" && internship?.candidateId) {
-      const existingGoToWork = await GoToWork.findOne({ candidateId: internship.candidateId });
-      if (!existingGoToWork) {
-        await GoToWork.create({
-          candidateId: internship.candidateId,
-          status: "SUBMITTED",
-          readinessStatus: "READY",
-          interviewStatus: "PENDING",
-          placementStatus: "IN_QUEUE",
-          notes: "Auto-created after internship completion",
-        });
-      }
-      await CandidateProfile.findOneAndUpdate(
-        { userId: internship.candidateId },
-        { selectedProgram: "GO_TO_WORK", assignedProgram: "GO_TO_WORK", candidateStatus: "ACTIVE" }
-      );
+      await promoteToGoToWorkAfterCompletion(internship.candidateId);
     }
 
     res.json({

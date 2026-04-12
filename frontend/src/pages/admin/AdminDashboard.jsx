@@ -58,7 +58,7 @@ const AdminDashboard = () => {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <StatCard label="Users" value={stats.users} />
           <StatCard label="Companies" value={stats.companies} />
-          <StatCard label="Candidate Profiles" value={stats.candidateProfiles} />
+          <StatCard label="Visitor Profiles" value={stats.candidateProfiles} />
           <StatCard label="Training Programs" value={stats.trainingPrograms} />
           <StatCard label="Internships" value={stats.internships} />
           <StatCard label="Shaqo Tag Program" value={stats.goToWork} />
