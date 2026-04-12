@@ -45,7 +45,7 @@ const AppRoutes = () => {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="dashboard">
               <MainLayout>
                 <AdminDashboard />
               </MainLayout>
@@ -55,7 +55,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/users"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="users">
               <MainLayout>
                 <Users />
               </MainLayout>
@@ -65,7 +65,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/companies"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="companies">
               <MainLayout>
                 <Companies />
               </MainLayout>
@@ -75,7 +75,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/internships"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="internships">
               <MainLayout>
                 <Internships />
               </MainLayout>
@@ -85,7 +85,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/go-to-work"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="go_to_work">
               <MainLayout>
                 <GoToWork />
               </MainLayout>
@@ -95,7 +95,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/candidate-profiles"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="candidate_profiles">
               <MainLayout>
                 <CandidateProfiles />
               </MainLayout>
@@ -105,7 +105,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/training-programs"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="training_programs">
               <MainLayout>
                 <TrainingPrograms />
               </MainLayout>
@@ -115,7 +115,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/hospitality"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="hospitality">
               <MainLayout>
                 <Hospitality />
               </MainLayout>
@@ -125,7 +125,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/documents"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="documents">
               <MainLayout>
                 <Documents />
               </MainLayout>
@@ -135,7 +135,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/excel-import"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="reports">
               <MainLayout>
                 <ExcelImport />
               </MainLayout>
@@ -145,7 +145,7 @@ const AppRoutes = () => {
         <Route
           path="/admin/settings"
           element={
-            <ProtectedRoute roles={["ADMIN"]}>
+            <ProtectedRoute roles={["ADMIN"]} requiredPage="settings">
               <MainLayout>
                 <Settings />
               </MainLayout>

@@ -1,8 +1,11 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import User from "../model/User.js";
+import RoleConfig from "../model/RoleConfig.js";
 import { jwt_secret } from "../config/config.js";
+import { DEFAULT_ADMIN_PAGES } from "../constants/pageAccess.js";
 
 const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const NAME_REGEX = /^[A-Za-z]+(?:[ .'-][A-Za-z]+)*$/;
@@ -37,6 +40,23 @@ const signToken = (user) =>
     expiresIn: "7d",
   });
 
+const resolveAccessRole = async (accessRoleRaw) => {
+  const normalized = String(accessRoleRaw || "ADMIN").trim().toUpperCase();
+  if (normalized === "ADMIN") {
+    await RoleConfig.findOneAndUpdate(
+      { name: "ADMIN" },
+      { name: "ADMIN", description: "Full access role", pages: DEFAULT_ADMIN_PAGES, isSystem: true },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+  }
+  const roleConfig = await RoleConfig.findOne({ name: normalized });
+  if (!roleConfig) throw new Error("Selected access role does not exist");
+  return {
+    accessRole: roleConfig.name,
+    pageAccess: Array.isArray(roleConfig.pages) && roleConfig.pages.length ? roleConfig.pages : DEFAULT_ADMIN_PAGES,
+  };
+};
+
 export const registerUser = async (req, res) => {
   try {
     const schema = z.object({
@@ -69,12 +89,21 @@ export const registerUser = async (req, res) => {
       phone,
       passwordHash: password, // pre-save will hash it
       role: "ADMIN",
+      accessRole: "ADMIN",
+      pageAccess: DEFAULT_ADMIN_PAGES,
       status: "ACTIVE",
     });
 
     return res.status(201).json({
       message: "Registered successfully.",
-      user: { id: user._id, fullName: user.fullName, role: user.role, status: user.status },
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        role: user.role,
+        accessRole: user.accessRole || "ADMIN",
+        pageAccess: user.pageAccess?.length ? user.pageAccess : DEFAULT_ADMIN_PAGES,
+        status: user.status,
+      },
     });
   } catch (e) {
     return res.status(500).json({ message: "Register error", error: e.message });
@@ -88,21 +117,16 @@ export const createUserByAdmin = async (req, res) => {
       email: z.string().email().optional(),
       phone: phoneSchema.optional(),
       password: passwordSchema,
-      role: z.enum(["ADMIN"]),
+      accessRole: z.string().trim().min(2).max(40),
       status: z.enum(["ACTIVE", "PENDING", "BANNED"]).optional(),
     });
 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(validationResponse(parsed));
 
-    const { fullName, email, phone, password, role, status } = parsed.data;
+    const { fullName, email, phone, password, accessRole, status } = parsed.data;
     if (!email && !phone) {
       return res.status(400).json({ message: "Email ama Phone waa qasab." });
-    }
-
-    const existingAdmins = await User.countDocuments({ role: "ADMIN" });
-    if (existingAdmins >= 1) {
-      return res.status(403).json({ message: "Second admin user disabled by system settings." });
     }
 
     const exists = await User.findOne({
@@ -113,12 +137,16 @@ export const createUserByAdmin = async (req, res) => {
       return res.status(409).json({ message: "User horey ayuu u jiraa." });
     }
 
+    const resolvedAccess = await resolveAccessRole(accessRole);
+
     const user = await User.create({
       fullName,
       email: email?.toLowerCase(),
       phone,
       passwordHash: password,
-      role,
+      role: "ADMIN",
+      accessRole: resolvedAccess.accessRole,
+      pageAccess: resolvedAccess.pageAccess,
       status: status || "ACTIVE",
     });
 
@@ -131,6 +159,8 @@ export const createUserByAdmin = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        accessRole: user.accessRole,
+        pageAccess: user.pageAccess,
         status: user.status,
         createdAt: user.createdAt,
       },
@@ -182,7 +212,14 @@ export const loginUser = async (req, res) => {
 
     return res.json({
       accessToken: token,
-      user: { id: user._id, fullName: user.fullName, role: user.role, status: user.status },
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        role: user.role,
+        accessRole: user.accessRole || "ADMIN",
+        pageAccess: user.pageAccess?.length ? user.pageAccess : DEFAULT_ADMIN_PAGES,
+        status: user.status,
+      },
     });
   } catch (e) {
     return res.status(500).json({ message: "Login error", error: e.message });
@@ -191,7 +228,6 @@ export const loginUser = async (req, res) => {
 
 export const getAllUsers = async (_req, res) => {
   const users = await User.find({
-    role: "ADMIN",
     email: { $not: /^candidate\..+@smartses\.local$/i },
   }).select("-passwordHash -resetPasswordTokenHash -resetPasswordExpiresAt");
   res.json({ success: true, data: users });
@@ -227,13 +263,18 @@ export const banUser = async (req, res) => {
 
 // Admin: update role
 export const updateUserRole = async (req, res) => {
-  const schema = z.object({ role: z.enum(["ADMIN"]) });
+  const schema = z.object({ accessRole: z.string().trim().min(2).max(40) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(validationResponse(parsed));
+  const resolvedAccess = await resolveAccessRole(parsed.data.accessRole);
 
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    { role: parsed.data.role },
+    {
+      role: "ADMIN",
+      accessRole: resolvedAccess.accessRole,
+      pageAccess: resolvedAccess.pageAccess,
+    },
     { new: true }
   ).select("-passwordHash");
 
@@ -265,15 +306,60 @@ export const updateMe = async (req, res) => {
     if (!oldPassword) return res.status(400).json({ message: "Old password required" });
     const ok = await user.comparePassword(oldPassword);
     if (!ok) return res.status(401).json({ message: "Old password incorrect" });
-    user.passwordHash = newPassword; // pre-save hashes
+    user.pendingPasswordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordChangeRequestStatus = "PENDING";
+    user.passwordChangeRequestedAt = new Date();
   }
 
   await user.save();
-  res.json({ success: true, message: "Updated", data: { id: user._id, fullName: user.fullName, phone: user.phone } });
+  const passwordMessage = newPassword
+    ? "Password change request sent. Waiting for admin approval."
+    : "Updated";
+  res.json({ success: true, message: passwordMessage, data: { id: user._id, fullName: user.fullName, phone: user.phone } });
 };
 
-export const getMe = (req,res)=>{
-  res.json({ success: true, data: req.user });
+export const getPasswordChangeRequests = async (_req, res) => {
+  const users = await User.find({ passwordChangeRequestStatus: "PENDING" })
+    .select("fullName email phone accessRole status passwordChangeRequestStatus passwordChangeRequestedAt createdAt")
+    .sort({ passwordChangeRequestedAt: -1 });
+  res.json({ success: true, data: users });
+};
+
+export const approvePasswordChangeRequest = async (req, res) => {
+  const user = await User.findById(req.params.id).select("+pendingPasswordHash +passwordHash");
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+  if (user.passwordChangeRequestStatus !== "PENDING" || !user.pendingPasswordHash) {
+    return res.status(400).json({ success: false, message: "No pending password request" });
+  }
+
+  user.passwordHash = user.pendingPasswordHash;
+  user.pendingPasswordHash = "";
+  user.passwordChangeRequestStatus = "NONE";
+  user.passwordChangeRequestedAt = null;
+  await user.save();
+
+  res.json({ success: true, message: "Password change approved" });
+};
+
+export const rejectPasswordChangeRequest = async (req, res) => {
+  const user = await User.findById(req.params.id).select("+pendingPasswordHash");
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+  if (user.passwordChangeRequestStatus !== "PENDING") {
+    return res.status(400).json({ success: false, message: "No pending password request" });
+  }
+
+  user.pendingPasswordHash = "";
+  user.passwordChangeRequestStatus = "REJECTED";
+  user.passwordChangeRequestedAt = null;
+  await user.save();
+
+  res.json({ success: true, message: "Password change rejected" });
+};
+
+export const getMe = async (req,res)=>{
+  const user = await User.findById(req.user.id).select("-passwordHash -resetPasswordTokenHash -resetPasswordExpiresAt");
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+  res.json({ success: true, data: user });
 };
 export const logout = (_req, res) => {
   res.clearCookie("token");

@@ -15,10 +15,9 @@ import {
 } from "../../api/trainingPrograms.api";
 import { getErrorMessage } from "../../utils/formatters";
 
-const statuses = ["PENDING", "SCHEDULED", "ATTENDING", "COMPLETED", "FAILED", "ABSENT", "CANCELLED"];
+const statuses = ["PENDING", "COMPLETED"];
+const educationLevels = ["NONE", "SECONDARY_LEVEL", "BACHELOR_DEGREE", "MASTER_DEGREE"];
 const emptyCreateForm = {
-  candidateId: "",
-  idNo: "",
   fullName: "",
   gender: "MALE",
   contact: "",
@@ -338,18 +337,8 @@ const TrainingPrograms = () => {
 
       <Modal open={openCreate} title="Add Training Program" onClose={() => setOpenCreate(false)} footer={null} size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <Input
-              label="Candidate User ID (optional)"
-              value={createForm.candidateId}
-              onChange={(e) => setCreateForm((p) => ({ ...p, candidateId: e.target.value }))}
-            />
-            <Input
-              label="ID No"
-              value={createForm.idNo}
-              onChange={(e) => setCreateForm((p) => ({ ...p, idNo: e.target.value }))}
-              required
-            />
+          <div className="grid gap-3 md:grid-cols-1">
+            <Input label="ID No" value="" placeholder="Auto generated (TR001...)" disabled />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <Input
@@ -384,17 +373,28 @@ const TrainingPrograms = () => {
               onChange={(e) => setCreateForm((p) => ({ ...p, district: e.target.value }))}
               required
             />
-            <Input
-              label="Education Level"
-              value={createForm.educationLevel}
-              onChange={(e) => setCreateForm((p) => ({ ...p, educationLevel: e.target.value }))}
-              required
-            />
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Education Level</label>
+              <select
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                value={createForm.educationLevel}
+                onChange={(e) => setCreateForm((p) => ({ ...p, educationLevel: e.target.value, faculty: e.target.value === "NONE" ? "" : p.faculty }))}
+                required
+              >
+                <option value="">Select level</option>
+                {educationLevels.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </div>
             <Input
               label="Faculty"
               value={createForm.faculty}
               onChange={(e) => setCreateForm((p) => ({ ...p, faculty: e.target.value }))}
-              required
+              required={createForm.educationLevel !== "NONE"}
+              disabled={createForm.educationLevel === "NONE"}
             />
           </div>
           <Input

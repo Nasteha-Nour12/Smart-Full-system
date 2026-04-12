@@ -14,14 +14,14 @@ import {
   upsertCandidateProfileByAdminRequest,
 } from "../../api/candidateProfiles.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
+import { addNotification } from "../../utils/notifications";
 
-const selectedPrograms = ["INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
+const selectedPrograms = ["CANDIDATE", "INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
 const hospitalityTypes = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE"];
 const trainingStatuses = ["PENDING", "SCHEDULED", "ATTENDING", "COMPLETED", "FAILED", "ABSENT"];
 const educationLevels = ["NONE", "BACHELOR_DEGREE"];
 
 const emptyForm = {
-  userId: "",
   idNo: "",
   fullName: "",
   gender: "MALE",
@@ -30,7 +30,7 @@ const emptyForm = {
   educationLevel: "",
   faculty: "",
   otherSkills: "",
-  selectedProgram: "INTERNSHIP",
+  selectedProgram: "CANDIDATE",
   hospitalityType: "",
   candidateStatus: "NEW",
   trainingStatus: "PENDING",
@@ -94,7 +94,7 @@ const CandidateProfiles = () => {
     district: "",
     educationLevel: "",
     faculty: "",
-    selectedProgram: "",
+    selectedProgram: "CANDIDATE",
     trainingStatus: "",
   });
 
@@ -142,7 +142,6 @@ const CandidateProfiles = () => {
       const res = await getCandidateProfileByUserIdRequest(userId);
       const p = res.data;
       setForm({
-        userId: p.userId?._id || userId,
         idNo: p.idNo || "",
         fullName: p.userId?.fullName || "",
         gender: p.gender || "MALE",
@@ -151,7 +150,7 @@ const CandidateProfiles = () => {
         educationLevel: p.educationLevel || p.education || "",
         faculty: p.faculty || "",
         otherSkills: (p.skills || []).map((s) => s.name).join(", "),
-        selectedProgram: p.selectedProgram || "INTERNSHIP",
+        selectedProgram: p.selectedProgram || "CANDIDATE",
         hospitalityType: p.hospitalityType || "",
         candidateStatus: p.candidateStatus || "NEW",
         trainingStatus: p.trainingStatus || "PENDING",
@@ -180,6 +179,7 @@ const CandidateProfiles = () => {
       setSaving(true);
       await deleteCandidateProfileByUserIdRequest(userId);
       toast.success("Candidate profile deleted");
+      addNotification({ title: "Candidate Deleted", message: "Candidate profile was deleted.", type: "warning" });
       await load();
       setSelected(null);
     } catch (err) {
@@ -203,6 +203,7 @@ const CandidateProfiles = () => {
       });
       await upsertCandidateProfileByAdminRequest(payload);
       toast.success("Candidate registration saved");
+      addNotification({ title: "Candidate Saved", message: "Candidate profile was saved successfully.", type: "success" });
       setOpenForm(false);
       setForm(emptyForm);
       await load();
@@ -221,7 +222,7 @@ const CandidateProfiles = () => {
 
       <ExcelImportPanel
         title="Excel Import - Candidate Registration"
-        description="Columns: idNo, fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram, hospitalityType, candidateStatus, trainingFee, programFee."
+        description="Columns: idNo(optional), fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram, hospitalityType, candidateStatus, trainingFee, programFee."
         onImport={async (rows) => {
           const res = await importCandidateProfilesRequest(rows);
           await load();
@@ -305,7 +306,7 @@ const CandidateProfiles = () => {
                 <th className="p-3 text-left">Contact</th>
                 <th className="p-3 text-left">Program</th>
                 <th className="p-3 text-left">Training</th>
-                <th className="p-3 text-left">Candidate Status</th>
+                <th className="p-3 text-left">Visitor Status</th>
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -359,13 +360,8 @@ const CandidateProfiles = () => {
 
       <Modal open={openForm} title="Candidate Registration" onClose={() => setOpenForm(false)} footer={null} size="xl">
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <Input
-              label="Candidate User ID (optional)"
-              value={form.userId}
-              onChange={(e) => handleFormChange({ userId: e.target.value })}
-            />
-            <Input label="ID No" value={form.idNo} onChange={(e) => handleFormChange({ idNo: e.target.value })} required />
+          <div className="grid gap-3 md:grid-cols-1">
+            <Input label="ID No" value={form.idNo || ""} placeholder="Auto generated (CAN001...)" disabled />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <Input
@@ -420,7 +416,8 @@ const CandidateProfiles = () => {
               label="Faculty"
               value={form.faculty}
               onChange={(e) => handleFormChange({ faculty: e.target.value })}
-              required
+              required={form.educationLevel !== "NONE"}
+              disabled={form.educationLevel === "NONE"}
             />
           </div>
           <Input

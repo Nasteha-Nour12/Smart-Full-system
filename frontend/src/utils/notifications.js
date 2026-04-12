@@ -1,6 +1,7 @@
 const STORAGE_KEY = "ses-notifications";
 const EVENT_NAME = "ses-notifications-updated";
 const MAX_NOTIFICATIONS = 50;
+const DEFAULT_TTL_MS = 2 * 60 * 1000;
 
 const safeParse = (value) => {
   try {
@@ -16,10 +17,18 @@ const emitUpdate = () => {
 };
 
 export const getNotifications = () => {
-  return safeParse(localStorage.getItem(STORAGE_KEY));
+  const now = Date.now();
+  const items = safeParse(localStorage.getItem(STORAGE_KEY)).filter((item) => {
+    const expiresAt = Number(item?.expiresAt || 0);
+    return !expiresAt || expiresAt > now;
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  return items;
 };
 
-export const addNotification = ({ title, message, type = "info" }) => {
+export const addNotification = ({ title, message, type = "info", ttlMs = DEFAULT_TTL_MS }) => {
+  const now = Date.now();
+  const expiresAt = now + Math.max(1000, Number(ttlMs || DEFAULT_TTL_MS));
   const item = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     title: title || "Notification",
@@ -27,6 +36,7 @@ export const addNotification = ({ title, message, type = "info" }) => {
     type,
     read: false,
     createdAt: new Date().toISOString(),
+    expiresAt,
   };
 
   const current = getNotifications();

@@ -1,7 +1,8 @@
 import { Router } from "express";
 import {
   registerUser, loginUser, getAllUsers, getSingleUser,
-  approveUser, banUser, updateUserRole, updateMe, createUserByAdmin, getMe, logout
+  approveUser, banUser, updateUserRole, updateMe, createUserByAdmin, getMe, logout,
+  getPasswordChangeRequests, approvePasswordChangeRequest, rejectPasswordChangeRequest
 } from "../controller/UserController.js";
 import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 
@@ -19,6 +20,9 @@ r.get("/:id", authenticate, authorizeRoles("ADMIN"), getSingleUser);
 r.patch("/:id/approve", authenticate, authorizeRoles("ADMIN"), approveUser);
 r.patch("/:id/ban", authenticate, authorizeRoles("ADMIN"), banUser);
 r.patch("/:id/role", authenticate, authorizeRoles("ADMIN"), updateUserRole);
+r.get("/password-requests/pending", authenticate, authorizeRoles("ADMIN"), getPasswordChangeRequests);
+r.patch("/password-requests/:id/approve", authenticate, authorizeRoles("ADMIN"), approvePasswordChangeRequest);
+r.patch("/password-requests/:id/reject", authenticate, authorizeRoles("ADMIN"), rejectPasswordChangeRequest);
 
 r.patch("/me/update", authenticate, updateMe);
 

@@ -1,5 +1,7 @@
 import Internship from "../model/Internship.js";
 import User from "../model/User.js";
+import GoToWork from "../model/GoToWork.js";
+import CandidateProfile from "../model/candidateProfile.js";
 import { getField, toSkillsArray } from "../utils/importHelpers.js";
 import { hasCompletedMandatoryTraining, markCandidateNotEligible } from "../utils/eligibility.js";
 import { ensurePrefixedIdNo } from "../utils/idGenerator.js";
@@ -357,6 +359,24 @@ export const updateInternshipStatus = async (req, res) => {
       { status },
       { new: true }
     );
+
+    if (status === "COMPLETED" && internship?.candidateId) {
+      const existingGoToWork = await GoToWork.findOne({ candidateId: internship.candidateId });
+      if (!existingGoToWork) {
+        await GoToWork.create({
+          candidateId: internship.candidateId,
+          status: "SUBMITTED",
+          readinessStatus: "READY",
+          interviewStatus: "PENDING",
+          placementStatus: "IN_QUEUE",
+          notes: "Auto-created after internship completion",
+        });
+      }
+      await CandidateProfile.findOneAndUpdate(
+        { userId: internship.candidateId },
+        { selectedProgram: "GO_TO_WORK", assignedProgram: "GO_TO_WORK", candidateStatus: "ACTIVE" }
+      );
+    }
 
     res.json({
       success: true,

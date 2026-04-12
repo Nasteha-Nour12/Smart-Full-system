@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const EXP_LEVEL = ["NONE", "JUNIOR", "MID", "SENIOR"];
 const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER"];
-const SELECTED_PROGRAMS = ["INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
+const SELECTED_PROGRAMS = ["VISITOR", "CANDIDATE", "INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
 const HOSPITALITY_TYPES = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE", ""];
 const CANDIDATE_STATUS = [
   "NEW",
@@ -41,7 +41,7 @@ const candidateProfileSchema = new mongoose.Schema(
     educationLevel: { type: String, trim: true, default: "" },
     faculty: { type: String, trim: true, default: "" },
     experienceLevel: { type: String, enum: EXP_LEVEL, default: "NONE" },
-    selectedProgram: { type: String, enum: SELECTED_PROGRAMS, default: "INTERNSHIP" },
+    selectedProgram: { type: String, enum: SELECTED_PROGRAMS, default: "CANDIDATE" },
     hospitalityType: { type: String, enum: HOSPITALITY_TYPES, default: "" },
     assignedProgram: { type: String, trim: true, default: "" },
     candidateStatus: { type: String, enum: CANDIDATE_STATUS, default: "NEW" },

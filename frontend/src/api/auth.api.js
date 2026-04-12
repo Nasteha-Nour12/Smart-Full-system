@@ -23,6 +23,11 @@ export const updateMeRequest = async (data) => {
   return res.data;
 };
 
+export const meRequest = async () => {
+  const res = await api.get("/users/me");
+  return res.data;
+};
+
 // LOGOUT (local)
 export const logoutRequest = async () => {
   try {
@@ -32,5 +37,6 @@ export const logoutRequest = async () => {
   }
   localStorage.removeItem("smart-ses-token");
   localStorage.removeItem("token");
+  localStorage.removeItem("smart-ses-user");
   return { success: true };
 };

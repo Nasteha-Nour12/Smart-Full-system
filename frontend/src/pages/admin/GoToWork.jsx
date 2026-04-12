@@ -34,7 +34,6 @@ const GoToWork = () => {
     notes: "",
   });
   const [createForm, setCreateForm] = useState({
-    candidateId: "",
     fullName: "",
     contact: "",
     notes: "",
@@ -127,7 +126,6 @@ const GoToWork = () => {
       });
       setOpenCreate(false);
       setCreateForm({
-        candidateId: "",
         fullName: "",
         contact: "",
         notes: "",
@@ -336,12 +334,7 @@ const GoToWork = () => {
 
       <Modal open={openCreate} title="Add Shaqo Tag" onClose={() => setOpenCreate(false)} footer={null} size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-3">
-            <Input
-              label="Candidate User ID (optional)"
-              value={createForm.candidateId}
-              onChange={(event) => setCreateForm((prev) => ({ ...prev, candidateId: event.target.value }))}
-            />
+          <div className="grid gap-3 md:grid-cols-2">
             <Input
               label="Full Name"
               value={createForm.fullName}

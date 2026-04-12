@@ -25,12 +25,27 @@ export const banUserRequest = async (id) => {
   return res.data;
 };
 
-export const updateUserRoleRequest = async (id, role) => {
-  const res = await api.patch(`/users/${id}/role`, { role });
+export const updateUserRoleRequest = async (id, accessRole) => {
+  const res = await api.patch(`/users/${id}/role`, { accessRole });
   return res.data;
 };
 
 export const updateMyProfileRequest = async (data) => {
   const res = await api.patch("/users/me/update", data);
+  return res.data;
+};
+
+export const getPendingPasswordRequests = async () => {
+  const res = await api.get("/users/password-requests/pending");
+  return res.data;
+};
+
+export const approvePasswordRequest = async (id) => {
+  const res = await api.patch(`/users/password-requests/${id}/approve`);
+  return res.data;
+};
+
+export const rejectPasswordRequest = async (id) => {
+  const res = await api.patch(`/users/password-requests/${id}/reject`);
   return res.data;
 };

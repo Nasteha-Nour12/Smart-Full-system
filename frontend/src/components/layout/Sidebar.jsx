@@ -1,10 +1,25 @@
 import { NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { BriefcaseBusiness, Building2, ClipboardList, LayoutDashboard, Users, UserRound, ShieldCheck, X } from "lucide-react";
+import { hasPageAccess } from "../../constants/pageAccess";
 import { useUISettings } from "../../context/UISettingsContext";
 
 const baseLink =
   "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition";
+
+const navItems = [
+  { key: "dashboard", to: "/admin", labelKey: "dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+  { key: "users", to: "/admin/users", labelKey: "users", icon: <Users className="h-4 w-4" /> },
+  { key: "companies", to: "/admin/companies", labelKey: "companies", icon: <Building2 className="h-4 w-4" /> },
+  { key: "candidate_profiles", to: "/admin/candidate-profiles", labelKey: "candidate_profiles", icon: <UserRound className="h-4 w-4" /> },
+  { key: "training_programs", to: "/admin/training-programs", labelKey: "training_programs", icon: <ClipboardList className="h-4 w-4" /> },
+  { key: "hospitality", to: "/admin/hospitality", labelKey: "hospitality", icon: <ClipboardList className="h-4 w-4" /> },
+  { key: "internships", to: "/admin/internships", labelKey: "internships", icon: <BriefcaseBusiness className="h-4 w-4" /> },
+  { key: "go_to_work", to: "/admin/go-to-work", labelKey: "go_to_work", icon: <ClipboardList className="h-4 w-4" /> },
+  { key: "documents", to: "/admin/documents", labelKey: "documents", icon: <ClipboardList className="h-4 w-4" /> },
+  { key: "reports", to: "/admin/excel-import", labelKey: "reports", icon: <ClipboardList className="h-4 w-4" /> },
+  { key: "settings", to: "/admin/settings", labelKey: "settings", icon: <ShieldCheck className="h-4 w-4" /> },
+];
 
 const Sidebar = ({ open, onClose }) => {
   const { user } = useSelector((state) => state.auth);
@@ -33,21 +48,11 @@ const Sidebar = ({ open, onClose }) => {
           </button>
         </div>
         <nav className="space-y-1">
-        {user?.role === "ADMIN" ? (
-          <>
-            <NavItem to="/admin" label={t("dashboard")} icon={<LayoutDashboard className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/users" label={t("users")} icon={<Users className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/companies" label={t("companies")} icon={<Building2 className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/candidate-profiles" label={t("candidate_profiles")} icon={<UserRound className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/training-programs" label={t("training_programs")} icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/hospitality" label="Hospitality" icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/internships" label={t("internships")} icon={<BriefcaseBusiness className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/go-to-work" label={t("go_to_work")} icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/documents" label={t("documents")} icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/excel-import" label={t("excel_import")} icon={<ClipboardList className="h-4 w-4" />} onClick={onClose} />
-            <NavItem to="/admin/settings" label={t("settings")} icon={<ShieldCheck className="h-4 w-4" />} onClick={onClose} />
-          </>
-        ) : null}
+        {user?.role === "ADMIN" ? navItems
+          .filter((item) => hasPageAccess(user, item.key))
+          .map((item) => (
+            <NavItem key={item.key} to={item.to} label={t(item.labelKey)} icon={item.icon} onClick={onClose} />
+          )) : null}
         </nav>
       </aside>
     </>

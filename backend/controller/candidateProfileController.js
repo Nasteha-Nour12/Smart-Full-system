@@ -1,8 +1,12 @@
 import CandidateProfile from "../model/candidateProfile.js";
 import User from "../model/User.js";
 import TrainingProgram from "../model/TrainingProgram.js";
+import Internship from "../model/Internship.js";
+import GoToWork from "../model/GoToWork.js";
+import Company from "../model/Company.js";
 import { getField, toSkillsArray } from "../utils/importHelpers.js";
 import { applyCandidateProgramLogic } from "../utils/candidateProgramLogic.js";
+import { ensurePrefixedIdNo } from "../utils/idGenerator.js";
 
 const ensureTrainingForCandidate = async (profile) => {
   const selected = String(profile.selectedProgram || "").toUpperCase();
@@ -58,6 +62,56 @@ const ensureTrainingForCandidate = async (profile) => {
         trainingStatus: profile.mandatoryTrainingStatus || "PENDING",
         trainingFee: 10,
         durationDays: 3,
+      });
+    }
+  }
+};
+
+const ensureProgramPlacement = async (profile) => {
+  const selected = String(profile.selectedProgram || "").toUpperCase();
+  const assigned = String(profile.assignedProgram || "").toUpperCase();
+  const target = assigned || selected;
+
+  if (target === "INTERNSHIP") {
+    const existing = await Internship.findOne({ candidateId: profile.userId });
+    if (!existing) {
+      const company = await Company.findOne().select("_id").lean();
+      if (!company?._id) return;
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 30);
+      await Internship.create({
+        candidateId: profile.userId,
+        companyId: company._id,
+        idNo: await ensurePrefixedIdNo(Internship, "", "IN"),
+        fullName: profile.userId?.fullName || "Visitor",
+        gender: profile.gender || "OTHER",
+        contact: profile.contact || profile.userId?.phone || profile.userId?.email || "",
+        district: profile.district || "N/A",
+        educationLevel: profile.educationLevel || profile.education || "NONE",
+        faculty: profile.faculty || "N/A",
+        otherSkills: profile.skills?.map((s) => s.name) || [],
+        position: "PENDING_ASSIGNMENT",
+        startDate,
+        endDate,
+        internshipFee: 0,
+        status: "PENDING",
+        notes: "Auto-created from Visitors module",
+      });
+    }
+    return;
+  }
+
+  if (target === "GO_TO_WORK") {
+    const existing = await GoToWork.findOne({ candidateId: profile.userId });
+    if (!existing) {
+      await GoToWork.create({
+        candidateId: profile.userId,
+        status: "SUBMITTED",
+        readinessStatus: "PENDING",
+        interviewStatus: "NOT_SCHEDULED",
+        placementStatus: "IN_QUEUE",
+        notes: "Auto-created from Visitors module",
       });
     }
   }
@@ -228,6 +282,7 @@ export const getMyProfile = async (req, res) => {
 export const upsertMyProfile = async (req, res) => {
   try {
     const payload = withDocumentStatuses(withProgramLogic({ ...req.body, userId: req.user.id }));
+    payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
 
     const profile = await CandidateProfile.findOneAndUpdate(
       { userId: req.user.id },
@@ -235,6 +290,7 @@ export const upsertMyProfile = async (req, res) => {
       { new: true, upsert: true, runValidators: true }
     );
     await ensureTrainingForCandidate(profile);
+    await ensureProgramPlacement(profile);
 
     res.status(200).json({
       success: true,
@@ -252,6 +308,7 @@ export const upsertMyProfile = async (req, res) => {
 export const updateMyProfile = async (req, res) => {
   try {
     const payload = withDocumentStatuses(withProgramLogic(req.body));
+    payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
     const profile = await CandidateProfile.findOneAndUpdate(
       { userId: req.user.id },
       payload,
@@ -266,6 +323,7 @@ export const updateMyProfile = async (req, res) => {
     }
 
     await ensureTrainingForCandidate(profile);
+    await ensureProgramPlacement(profile);
     res.json({
       success: true,
       message: "Profile updated successfully",
@@ -418,7 +476,8 @@ export const upsertProfileByAdmin = async (req, res) => {
       fullName: req.body?.fullName,
     });
     if (!userId && req.body?.idNo) {
-      const existingProfile = await CandidateProfile.findOne({ idNo: String(req.body.idNo).trim() });
+      const normalizedIdNo = await ensurePrefixedIdNo(CandidateProfile, String(req.body.idNo).trim(), "CAN");
+      const existingProfile = await CandidateProfile.findOne({ idNo: normalizedIdNo });
       if (existingProfile?.userId) userId = existingProfile.userId;
     }
     if (!userId) {
@@ -441,6 +500,7 @@ export const upsertProfileByAdmin = async (req, res) => {
       otherSkills: toSkillsArray(req.body.otherSkills),
       notes: req.body.notes || req.body.remarks || "",
     }));
+    payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
 
     const profile = await CandidateProfile.findOneAndUpdate(
       { userId },
@@ -449,6 +509,7 @@ export const upsertProfileByAdmin = async (req, res) => {
     );
 
     await ensureTrainingForCandidate(profile);
+    await ensureProgramPlacement(profile);
     res.status(200).json({ success: true, message: "Candidate registration saved", data: profile });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -472,10 +533,11 @@ export const importProfilesByAdmin = async (req, res) => {
         const idNo = String(getField(row, ["idNo", "id no", "idnumber", "id_number"])).trim();
         const fullName = String(getField(row, ["fullName", "full name", "candidate", "name"])).trim();
         const contact = String(getField(row, ["contact", "phone", "email"], "")).trim();
-        if (!idNo || !fullName) {
-          throw new Error("Required: idNo, fullName/candidate");
+        if (!fullName) {
+          throw new Error("Required: fullName/candidate");
         }
-        const key = idNo.toLowerCase();
+        const normalizedIdNo = await ensurePrefixedIdNo(CandidateProfile, idNo, "CAN");
+        const key = normalizedIdNo.toLowerCase();
         if (seenIdNos.has(key)) throw new Error("Duplicate idNo in uploaded file");
         seenIdNos.add(key);
 
@@ -503,8 +565,8 @@ export const importProfilesByAdmin = async (req, res) => {
           phone: getField(row, ["phone"]),
           fullName,
         });
-        if (!userId && idNo) {
-          const existingProfile = await CandidateProfile.findOne({ idNo });
+        if (!userId && normalizedIdNo) {
+          const existingProfile = await CandidateProfile.findOne({ idNo: normalizedIdNo });
           if (existingProfile?.userId) userId = existingProfile.userId;
         }
         if (!userId) {
@@ -513,18 +575,18 @@ export const importProfilesByAdmin = async (req, res) => {
             email: getField(row, ["email"]),
             phone: getField(row, ["phone"]),
             fullName,
-            idNo,
+            idNo: normalizedIdNo,
           });
         }
         await ensureCandidateRole(userId);
         if (!userId) throw new Error("Candidate user not found");
 
-        const existingDifferent = await CandidateProfile.findOne({ idNo, userId: { $ne: userId } });
+        const existingDifferent = await CandidateProfile.findOne({ idNo: normalizedIdNo, userId: { $ne: userId } });
         if (existingDifferent) throw new Error("Duplicate idNo already used by another candidate");
 
         const payload = withDocumentStatuses(withProgramLogic({
           userId,
-          idNo,
+          idNo: normalizedIdNo,
           fullName,
           gender: String(getField(row, ["gender"], "OTHER")).toUpperCase(),
           contact,
@@ -532,7 +594,7 @@ export const importProfilesByAdmin = async (req, res) => {
           educationLevel: String(getField(row, ["educationLevel", "education level"])).trim(),
           faculty: String(getField(row, ["faculty"])).trim(),
           otherSkills: toSkillsArray(getField(row, ["otherSkills", "other skills"])),
-          selectedProgram: String(getField(row, ["selectedProgram", "selected program"], "INTERNSHIP")).toUpperCase(),
+          selectedProgram: String(getField(row, ["selectedProgram", "selected program"], "CANDIDATE")).toUpperCase(),
           hospitalityType: String(getField(row, ["hospitalityType", "hospitality type"], "")).toUpperCase(),
           candidateStatus: String(getField(row, ["candidateStatus", "candidate status"], "NEW")).toUpperCase(),
           trainingStatus: String(getField(row, ["trainingStatus", "training status"], "PENDING")).toUpperCase(),
@@ -567,6 +629,7 @@ export const importProfilesByAdmin = async (req, res) => {
         );
 
         await ensureTrainingForCandidate(profile);
+        await ensureProgramPlacement(profile);
         created.push(profile);
       } catch (error) {
         failed.push({ row: i + 1, message: error.message });

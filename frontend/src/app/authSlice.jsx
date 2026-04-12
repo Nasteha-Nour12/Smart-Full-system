@@ -1,16 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginRequest, registerRequest, logoutRequest } from "../api/auth.api";
-
-const getStoredUser = () => {
-  try {
-    const raw = localStorage.getItem("smart-ses-user");
-    if (!raw) return null;
-    const user = JSON.parse(raw);
-    return user?.role === "ADMIN" ? user : null;
-  } catch {
-    return null;
-  }
-};
+import { loginRequest, registerRequest, logoutRequest, meRequest } from "../api/auth.api";
 
 const persistUser = (user) => {
   if (user) {
@@ -56,12 +45,18 @@ export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
 
 export const loadUser = createAsyncThunk("auth/loadUser", async (_, thunkAPI) => {
   try {
-    const user = getStoredUser();
-    if (!user) {
+    const token = localStorage.getItem("smart-ses-token") || localStorage.getItem("token");
+    if (!token) {
       return thunkAPI.rejectWithValue(null);
     }
+    const res = await meRequest();
+    const user = res?.data || null;
+    if (!user) return thunkAPI.rejectWithValue(null);
     return user;
   } catch {
+    localStorage.removeItem("smart-ses-token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("smart-ses-user");
     return thunkAPI.rejectWithValue(null);
   }
 });
@@ -69,8 +64,8 @@ export const loadUser = createAsyncThunk("auth/loadUser", async (_, thunkAPI) =>
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: getStoredUser(),
-    isAuthenticated: !!getStoredUser(),
+    user: null,
+    isAuthenticated: false,
     loading: false,
     error: null,
   },
@@ -94,7 +89,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.user = action.payload?.role === "ADMIN" ? action.payload : null;
+        state.user = action.payload || null;
         state.isAuthenticated = !!state.user;
         state.loading = false;
         persistUser(state.user);
@@ -110,7 +105,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.user = action.payload?.role === "ADMIN" ? action.payload : null;
+        state.user = action.payload || null;
         state.isAuthenticated = !!state.user;
         state.loading = false;
         persistUser(state.user);
@@ -125,14 +120,16 @@ const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(loadUser.fulfilled, (state, action) => {
-        state.user = action.payload?.role === "ADMIN" ? action.payload : null;
+        state.user = action.payload || null;
         state.isAuthenticated = !!state.user;
         state.loading = false;
+        persistUser(state.user);
       })
       .addCase(loadUser.rejected, (state) => {
         state.user = null;
         state.isAuthenticated = false;
         state.loading = false;
+        persistUser(null);
       })
 
       // LOGOUT

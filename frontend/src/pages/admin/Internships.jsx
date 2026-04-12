@@ -20,12 +20,10 @@ const Internships = () => {
   const [companies, setCompanies] = useState([]);
   const [openCreate, setOpenCreate] = useState(false);
   const [createForm, setCreateForm] = useState({
-    candidateId: "",
     companyId: "",
     position: "",
     startDate: "",
     endDate: "",
-    idNo: "",
     fullName: "",
     gender: "MALE",
     contact: "",
@@ -90,12 +88,10 @@ const Internships = () => {
       });
       setOpenCreate(false);
       setCreateForm({
-        candidateId: "",
         companyId: "",
         position: "",
         startDate: "",
         endDate: "",
-        idNo: "",
         fullName: "",
         gender: "MALE",
         contact: "",
@@ -211,18 +207,8 @@ const Internships = () => {
 
       <Modal open={openCreate} title="Add Internship" onClose={() => setOpenCreate(false)} footer={null} size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <Input
-              label="Candidate User ID (optional)"
-              value={createForm.candidateId}
-              onChange={(event) => setCreateForm((prev) => ({ ...prev, candidateId: event.target.value }))}
-            />
-            <Input
-              label="ID No"
-              value={createForm.idNo}
-              onChange={(event) => setCreateForm((prev) => ({ ...prev, idNo: event.target.value }))}
-              required
-            />
+          <div className="grid gap-3 md:grid-cols-1">
+            <Input label="ID No" value="" placeholder="Auto generated (IN001...)" disabled />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <Input

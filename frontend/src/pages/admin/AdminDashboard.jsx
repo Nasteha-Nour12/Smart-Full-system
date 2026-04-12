@@ -61,7 +61,7 @@ const AdminDashboard = () => {
           <StatCard label="Candidate Profiles" value={stats.candidateProfiles} />
           <StatCard label="Training Programs" value={stats.trainingPrograms} />
           <StatCard label="Internships" value={stats.internships} />
-          <StatCard label="Go To Work Requests" value={stats.goToWork} />
+          <StatCard label="Shaqo Tag Program" value={stats.goToWork} />
         </div>
       ) : null}
     </div>

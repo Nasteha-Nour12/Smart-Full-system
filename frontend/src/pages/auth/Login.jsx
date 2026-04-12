@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import coaLogo from "../../assets/coa-logo.svg";
+import { DEFAULT_PAGE_ACCESS, PAGE_ACCESS_OPTIONS } from "../../constants/pageAccess";
 
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -29,7 +30,9 @@ const Login = () => {
 
   /* ================= ROLE BASED REDIRECT ================= */
   if (isAuthenticated && user?.role) {
-    return <Navigate to="/admin" replace />;
+    const pages = Array.isArray(user?.pageAccess) && user.pageAccess.length ? user.pageAccess : DEFAULT_PAGE_ACCESS;
+    const firstPage = PAGE_ACCESS_OPTIONS.find((item) => pages.includes(item.key));
+    return <Navigate to={firstPage?.path || "/admin"} replace />;
   }
 
   return (
@@ -37,7 +40,7 @@ const Login = () => {
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-5 flex flex-col items-center justify-center gap-2">
           <img src={coaLogo} alt="System logo" className="h-16 w-16 rounded-2xl shadow-lg shadow-black/30" />
-          <p className="text-sm font-semibold tracking-[0.2em] text-cyan-100">SMART</p>
+          <p className="text-center text-xs font-semibold tracking-[0.14em] text-cyan-100">SMART EMPLOYMENT SERVICES</p>
         </div>
         <h2 className="text-center text-2xl font-bold text-white">Login</h2>
 

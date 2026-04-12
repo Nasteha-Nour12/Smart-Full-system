@@ -1,4 +1,6 @@
 export const SELECTED_PROGRAM = {
+  VISITOR: "VISITOR",
+  CANDIDATE: "CANDIDATE",
   INTERNSHIP: "INTERNSHIP",
   HOSPITALITY: "HOSPITALITY",
   GO_TO_WORK: "GO_TO_WORK",
@@ -27,7 +29,7 @@ export const applyCandidateProgramLogic = (payload) => {
     payload.mandatoryTrainingStatus || payload.trainingStatus || TRAINING_STATUS.PENDING
   ).toUpperCase();
 
-  next.selectedProgram = selectedProgram || SELECTED_PROGRAM.INTERNSHIP;
+  next.selectedProgram = selectedProgram || SELECTED_PROGRAM.CANDIDATE;
   next.hospitalityType = hospitalityType || "";
   next.mandatoryTrainingStatus = mandatoryTrainingStatus;
   next.trainingStatus = mandatoryTrainingStatus;

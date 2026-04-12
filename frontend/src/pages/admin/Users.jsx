@@ -5,24 +5,26 @@ import Loader from "../../components/ui/Loader";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import {
+  approvePasswordRequest,
   approveUserRequest,
   banUserRequest,
   createAdminUserRequest,
+  getPendingPasswordRequests,
   getUserByIdRequest,
   getUsersRequest,
+  rejectPasswordRequest,
   updateUserRoleRequest,
 } from "../../api/user.api";
+import { getRolesRequest } from "../../api/roles.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
-
-const roleOptions = ["ADMIN"];
-const creatableRoleOptions = ["ADMIN"];
+import { addNotification } from "../../utils/notifications";
 
 const emptyCreateForm = {
   fullName: "",
   email: "",
   phone: "",
   password: "",
-  role: "ADMIN",
+  accessRole: "ADMIN",
   status: "ACTIVE",
 };
 
@@ -30,6 +32,8 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
+  const [roles, setRoles] = useState([]);
+  const [passwordRequests, setPasswordRequests] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,8 +43,14 @@ const Users = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await getUsersRequest();
-      setUsers(res.data || []);
+      const [usersRes, rolesRes, passwordRes] = await Promise.all([
+        getUsersRequest(),
+        getRolesRequest(),
+        getPendingPasswordRequests(),
+      ]);
+      setUsers(usersRes.data || []);
+      setRoles(rolesRes.data || []);
+      setPasswordRequests(passwordRes.data || []);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load users"));
     } finally {
@@ -65,6 +75,7 @@ const Users = () => {
     try {
       setSaving(true);
       await approveUserRequest(id);
+      addNotification({ title: "User Approved", message: "A user account was activated.", type: "success" });
       await loadUsers();
       if (selectedUser?._id === id) {
         await openUser(id);
@@ -80,6 +91,7 @@ const Users = () => {
     try {
       setSaving(true);
       await banUserRequest(id);
+      addNotification({ title: "User Banned", message: "A user account was banned.", type: "warning" });
       await loadUsers();
       if (selectedUser?._id === id) {
         await openUser(id);
@@ -91,10 +103,11 @@ const Users = () => {
     }
   };
 
-  const handleRoleChange = async (id, role) => {
+  const handleRoleChange = async (id, accessRole) => {
     try {
       setSaving(true);
-      await updateUserRoleRequest(id, role);
+      await updateUserRoleRequest(id, accessRole);
+      addNotification({ title: "Role Updated", message: `User access role updated to ${accessRole}.`, type: "info" });
       await loadUsers();
       if (selectedUser?._id === id) {
         await openUser(id);
@@ -115,6 +128,7 @@ const Users = () => {
         email: createForm.email.trim(),
         phone: createForm.phone.trim(),
       });
+      addNotification({ title: "User Created", message: `New user created with role ${createForm.accessRole}.`, type: "success" });
       setCreateForm(emptyCreateForm);
       setCreateOpen(false);
       await loadUsers();
@@ -125,10 +139,36 @@ const Users = () => {
     }
   };
 
+  const handleApprovePassword = async (id) => {
+    try {
+      setSaving(true);
+      await approvePasswordRequest(id);
+      addNotification({ title: "Password Approved", message: "Password change request approved.", type: "success" });
+      await loadUsers();
+    } catch (err) {
+      alert(getErrorMessage(err, "Failed to approve password request"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRejectPassword = async (id) => {
+    try {
+      setSaving(true);
+      await rejectPasswordRequest(id);
+      addNotification({ title: "Password Rejected", message: "Password change request rejected.", type: "warning" });
+      await loadUsers();
+    } catch (err) {
+      alert(getErrorMessage(err, "Failed to reject password request"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
-      <PageTitle title="Users" subtitle="Approve accounts and manage admin users">
-        <Button onClick={() => setCreateOpen(true)}>Create Admin User</Button>
+      <PageTitle title="Users" subtitle="Approve accounts, create users, and assign access roles">
+        <Button onClick={() => setCreateOpen(true)}>Create User</Button>
       </PageTitle>
 
       {loading ? <Loader /> : null}
@@ -152,7 +192,7 @@ const Users = () => {
                 <tr key={user._id} className="border-t">
                   <td className="p-3 font-medium text-slate-800">{user.fullName}</td>
                   <td className="p-3 text-slate-600">{user.email || user.phone || "-"}</td>
-                  <td className="p-3">{user.role}</td>
+                  <td className="p-3">{user.accessRole || user.role}</td>
                   <td className="p-3">{user.status}</td>
                   <td className="p-3">{formatDate(user.createdAt)}</td>
                   <td className="p-3 text-right">
@@ -178,6 +218,46 @@ const Users = () => {
                 <tr>
                   <td className="p-4 text-center text-slate-500" colSpan={6}>
                     No users found
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      {!loading ? (
+        <div className="mt-6 overflow-x-auto rounded-xl bg-white shadow">
+          <div className="border-b bg-slate-50 px-4 py-3">
+            <p className="text-sm font-semibold text-slate-700">Pending Password Change Requests</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-slate-100 text-slate-700">
+              <tr>
+                <th className="p-3 text-left">Name</th>
+                <th className="p-3 text-left">Contact</th>
+                <th className="p-3 text-left">Requested At</th>
+                <th className="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {passwordRequests.map((item) => (
+                <tr key={item._id} className="border-t">
+                  <td className="p-3 font-medium text-slate-800">{item.fullName}</td>
+                  <td className="p-3 text-slate-600">{item.email || item.phone || "-"}</td>
+                  <td className="p-3">{formatDate(item.passwordChangeRequestedAt || item.updatedAt)}</td>
+                  <td className="p-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button onClick={() => handleApprovePassword(item._id)} loading={saving}>Approve</Button>
+                      <Button variant="danger" onClick={() => handleRejectPassword(item._id)} loading={saving}>Reject</Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {passwordRequests.length === 0 ? (
+                <tr>
+                  <td className="p-4 text-center text-slate-500" colSpan={4}>
+                    No pending password requests
                   </td>
                 </tr>
               ) : null}
@@ -219,12 +299,12 @@ const Users = () => {
               <label className="mb-1 block text-sm font-medium text-slate-700">Role</label>
               <select
                 className="w-full rounded border border-slate-300 px-3 py-2"
-                value={selectedUser.role}
+                value={selectedUser.accessRole || "ADMIN"}
                 onChange={(event) => handleRoleChange(selectedUser._id, event.target.value)}
               >
-                {roleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
+                {roles.map((role) => (
+                  <option key={role._id} value={role.name}>
+                    {role.name}
                   </option>
                 ))}
               </select>
@@ -253,7 +333,7 @@ const Users = () => {
 
       <Modal
         open={createOpen}
-        title="Create Admin User"
+        title="Create User"
         onClose={() => setCreateOpen(false)}
         footer={null}
       >
@@ -297,14 +377,14 @@ const Users = () => {
               <label className="mb-1 block text-sm font-medium text-slate-700">Role</label>
               <select
                 className="w-full rounded border border-slate-300 px-3 py-2"
-                value={createForm.role}
+                value={createForm.accessRole}
                 onChange={(event) =>
-                  setCreateForm((prev) => ({ ...prev, role: event.target.value }))
+                  setCreateForm((prev) => ({ ...prev, accessRole: event.target.value }))
                 }
               >
-                {creatableRoleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
+                {roles.map((role) => (
+                  <option key={role._id} value={role.name}>
+                    {role.name}
                   </option>
                 ))}
               </select>

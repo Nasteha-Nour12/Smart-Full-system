@@ -1,13 +1,19 @@
 // src/api/axios.jsx
 import axios from "axios";
 
+const normalizeApiBase = (raw) => {
+  const value = String(raw || "").trim();
+  if (!value) return "http://localhost:8000/api";
+  return value.endsWith("/api") ? value : `${value.replace(/\/+$/, "")}/api`;
+};
+
 /**
  * Axios instance
  * - Cookie-based auth (JWT in cookies)
  * - Centralized config
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
+  baseURL: normalizeApiBase(import.meta.env.VITE_API_URL),
   withCredentials: true, // 🍪 allow cookies
   headers: {
     "Content-Type": "application/json",

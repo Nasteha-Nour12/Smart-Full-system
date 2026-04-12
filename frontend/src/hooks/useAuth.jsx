@@ -2,6 +2,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { login, registerUser, logoutUser, loadUser } from "../app/authSlice";
+import { DEFAULT_PAGE_ACCESS, PAGE_ACCESS_OPTIONS } from "../constants/pageAccess";
 
 const useAuth = () => {
   const dispatch = useDispatch();
@@ -11,12 +12,12 @@ const useAuth = () => {
     (state) => state.auth
   );
 
-  const goByRole = (role) => {
-    if (role === "ADMIN") {
-      navigate("/admin");
-      return;
-    }
-    navigate("/login");
+  const goByRole = (_role, userData) => {
+    const pageAccess = Array.isArray(userData?.pageAccess) && userData.pageAccess.length
+      ? userData.pageAccess
+      : DEFAULT_PAGE_ACCESS;
+    const firstPage = PAGE_ACCESS_OPTIONS.find((item) => pageAccess.includes(item.key));
+    navigate(firstPage?.path || "/admin");
   };
 
   /* ================= LOGIN ================= */
@@ -25,7 +26,7 @@ const useAuth = () => {
 
     if (res.meta.requestStatus === "fulfilled") {
       const role = res.payload?.role || res.payload?.user?.role;
-      goByRole(role);
+      goByRole(role, res.payload || res.payload?.user);
     }
     return res;
   };
@@ -37,7 +38,7 @@ const useAuth = () => {
 
     if (res.meta.requestStatus === "fulfilled") {
       const role = res.payload?.role || res.payload?.user?.role || "ADMIN";
-      goByRole(role);
+      goByRole(role, res.payload || res.payload?.user);
     }
     return res;
   };
