@@ -13,11 +13,6 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import trainingProgramRoutes from "./routes/trainingProgramRoutes.js";
 import hospitalityProgramRoutes from "./routes/hospitalityProgramRoutes.js";
 import roleConfigRoutes from "./routes/roleConfigRoutes.js";
-
-
-
-
-
 import cookieParser from 'cookie-parser';
 import cors from "cors"
 const app = express();
@@ -29,7 +24,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 const allowedOrigins = [
-   "http://localhost:5173",
+  "http://localhost:5173",
+  "http://64.226.100.229",
   "http://127.0.0.1:5173",
   "https://smart-full-system.onrender.com",
 ];
@@ -71,7 +67,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 conectBD();
-app.listen(PORT ,()=>{
-    console.log(`Server is running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 
 })
