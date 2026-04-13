@@ -87,7 +87,7 @@ const Register = () => {
             label="Password"
             name="password"
             type="password"
-            placeholder="Enter password"
+            placeholder="Enter pass"
             value={form.password}
             onChange={handleChange}
             required
