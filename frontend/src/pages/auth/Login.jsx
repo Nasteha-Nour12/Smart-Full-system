@@ -75,7 +75,7 @@ const Login = () => {
 
           <Button
             type="submit"
-            className="w-full bg-white text-slate-900 hover:bg-slate-100"
+            className="w-full bg-black text-slate-900 hover:bg-slate-100"
             loading={loading}
           >
             {loading ? "Logging in..." : "Login"}
