@@ -3,7 +3,7 @@ import axios from "axios";
 
 const normalizeApiBase = (raw) => {
   const value = String(raw || "").trim();
-  if (!value) return "http://localhost:8000/api";
+  if (!value) return "/api";
   if (value === "/api" || value.endsWith("/api")) return value.replace(/\/+$/, "");
   return `${value.replace(/\/+$/, "")}/api`;
 };
