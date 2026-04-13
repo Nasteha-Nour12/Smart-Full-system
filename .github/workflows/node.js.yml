@@ -44,4 +44,4 @@ jobs:
         run: |
           pm2 delete smart || true
           pm2 start npm --name "smart" -- start
-          pm2 save
+          pm2 save 
