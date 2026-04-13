@@ -50,3 +50,8 @@ export const importCandidateProfilesRequest = async (rows) => {
   const res = await api.post("/candidate-profiles/import", { rows });
   return res.data;
 };
+
+export const syncCandidateProfilesProgramsRequest = async () => {
+  const res = await api.post("/candidate-profiles/sync-programs");
+  return res.data;
+};

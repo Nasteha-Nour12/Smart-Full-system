@@ -9,7 +9,7 @@ const EDUCATION_LEVELS = ["BACHELOR_DEGREE", "MASTER_DEGREE", "SECONDARY_LEVEL",
 const NAME_REGEX = /^[A-Za-z]+(?:[ .'-][A-Za-z]+)*$/;
 const PHONE_REGEX = /^\+?\d{7,15}$/;
 const canAssignCandidate = (role) =>
-  ["ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"].includes(role);
+  ["ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"].includes(role);
 
 const promoteToGoToWorkAfterCompletion = async (candidateId) => {
   if (!candidateId) return;

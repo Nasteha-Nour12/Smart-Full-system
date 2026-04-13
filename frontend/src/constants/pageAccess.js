@@ -2,7 +2,7 @@ export const PAGE_ACCESS_OPTIONS = [
   { key: "dashboard", label: "Dashboard", path: "/admin" },
   { key: "users", label: "Users", path: "/admin/users" },
   { key: "companies", label: "Companies", path: "/admin/companies" },
-  { key: "candidate_profiles", label: "Candidate Profiles", path: "/admin/candidate-profiles" },
+  { key: "candidate_profiles", label: "Visitor Profiles", path: "/admin/candidate-profiles" },
   { key: "training_programs", label: "Training Programs", path: "/admin/training-programs" },
   { key: "hospitality", label: "Hospitality", path: "/admin/hospitality" },
   { key: "internships", label: "Internships", path: "/admin/internships" },

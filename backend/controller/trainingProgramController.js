@@ -40,7 +40,7 @@ const applyTrainingTypeDefaults = (payload) => {
 };
 
 const canAssignCandidate = (role) =>
-  ["ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"].includes(role);
+  ["ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"].includes(role);
 
 const resolveCandidate = async ({ candidateId, contact, email, phone, fullName }) => {
   if (candidateId) return candidateId;

@@ -2,9 +2,10 @@ import GoToWork from "../model/GoToWork.js";
 import User from "../model/User.js";
 import { getField } from "../utils/importHelpers.js";
 import { hasCompletedMandatoryTraining, markCandidateNotEligible } from "../utils/eligibility.js";
+import { ensurePrefixedIdNo } from "../utils/idGenerator.js";
 
 const canAssignCandidate = (role) =>
-  ["ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"].includes(role);
+  ["ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"].includes(role);
 
 const resolveCandidate = async ({ candidateId, contact, email, phone, fullName }) => {
   if (candidateId) return candidateId;
@@ -21,6 +22,16 @@ const resolveCandidate = async ({ candidateId, contact, email, phone, fullName }
   if (!lookup.length) return null;
   const user = await User.findOne({ $or: lookup, ...(fullName ? { fullName: String(fullName).trim() } : {}) });
   return user?._id || null;
+};
+
+const ensureGoToWorkId = async (docOrId) => {
+  if (!docOrId) return null;
+  const doc = typeof docOrId === "object" ? docOrId : await GoToWork.findById(docOrId);
+  if (!doc) return null;
+  if (String(doc.idNo || "").trim()) return doc;
+  doc.idNo = await ensurePrefixedIdNo(GoToWork, "", "GTW");
+  await doc.save();
+  return doc;
 };
 
 /* =======================================================
@@ -61,6 +72,7 @@ export const submitGoToWork = async (req, res) => {
     }
 
     const gtw = await GoToWork.create({
+      idNo: await ensurePrefixedIdNo(GoToWork, req.body?.idNo || "", "GTW"),
       candidateId: targetCandidateId,
       notes: req.body?.notes || "",
       status: req.body?.status || "SUBMITTED",
@@ -123,6 +135,7 @@ export const importGoToWork = async (req, res) => {
         seenCandidates.add(String(candidateId));
 
         const payload = {
+          idNo: await ensurePrefixedIdNo(GoToWork, String(getField(row, ["idNo", "id no", "id_number"], "")).trim(), "GTW"),
           candidateId,
           status: String(getField(row, ["status", "goToWorkStatus", "go to work status"], "SUBMITTED")).toUpperCase(),
           matchedCompanyId: getField(row, ["matchedCompanyId", "matched company id"], null) || null,
@@ -159,8 +172,9 @@ export const importGoToWork = async (req, res) => {
 ======================================================= */
 export const getMyGoToWork = async (req, res) => {
   try {
-    const gtw = await GoToWork.findOne({ candidateId: req.user.id })
+    let gtw = await GoToWork.findOne({ candidateId: req.user.id })
       .populate("matchedCompanyId", "name location industry status");
+    gtw = await ensureGoToWorkId(gtw);
 
     if (!gtw) {
       return res.json({
@@ -191,6 +205,7 @@ export const getAllGoToWork = async (req, res) => {
       .populate("candidateId", "fullName email phone")
       .populate("matchedCompanyId", "name location")
       .sort({ createdAt: -1 });
+    await Promise.all(list.map((row) => ensureGoToWorkId(row)));
 
     res.json({ success: true, count: list.length, data: list });
   } catch (error) {
@@ -203,9 +218,10 @@ export const getAllGoToWork = async (req, res) => {
 ======================================================= */
 export const getGoToWorkById = async (req, res) => {
   try {
-    const gtw = await GoToWork.findById(req.params.id)
+    let gtw = await GoToWork.findById(req.params.id)
       .populate("candidateId", "fullName email phone")
       .populate("matchedCompanyId", "name location");
+    gtw = await ensureGoToWorkId(gtw);
 
     if (!gtw) {
       return res.status(404).json({ success: false, message: "Request not found" });

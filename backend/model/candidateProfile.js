@@ -41,7 +41,7 @@ const candidateProfileSchema = new mongoose.Schema(
     educationLevel: { type: String, trim: true, default: "" },
     faculty: { type: String, trim: true, default: "" },
     experienceLevel: { type: String, enum: EXP_LEVEL, default: "NONE" },
-    selectedProgram: { type: String, enum: SELECTED_PROGRAMS, default: "CANDIDATE" },
+    selectedProgram: { type: String, enum: SELECTED_PROGRAMS, default: "INTERNSHIP" },
     hospitalityType: { type: String, enum: HOSPITALITY_TYPES, default: "" },
     assignedProgram: { type: String, trim: true, default: "" },
     candidateStatus: { type: String, enum: CANDIDATE_STATUS, default: "NEW" },

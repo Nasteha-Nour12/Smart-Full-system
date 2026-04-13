@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { DEFAULT_ADMIN_PAGES, PAGE_ACCESS } from "../constants/pageAccess.js";
 
-const ROLES = ["ADMIN", "JOB_SEEKER", "EMPLOYER", "INTERNSHIP_EMPLOYER", "CEO", "ICT_OFFICER"];
+const ROLES = ["ADMIN", "VISITOR", "EMPLOYER", "INTERNSHIP_EMPLOYER", "CEO"];
 const STATUS = ["ACTIVE", "PENDING", "BANNED"];
 const PASSWORD_REQUEST_STATUS = ["NONE", "PENDING", "REJECTED"];
 

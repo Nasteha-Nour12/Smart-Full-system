@@ -10,6 +10,7 @@ import {
   deleteProfileByUserId,
   upsertProfileByAdmin,
   importProfilesByAdmin,
+  syncProfilesToPrograms,
 } from "../controller/candidateProfileController.js";
 import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 
@@ -29,10 +30,11 @@ router.delete("/me/skills/:skillId", authenticate, removeSkill);
 /* ============================
    ADMIN
 ============================ */
-router.get("/", authenticate, authorizeRoles("ADMIN", "ICT_OFFICER"), getAllProfiles);
-router.post("/admin-upsert", authenticate, authorizeRoles("ADMIN", "ICT_OFFICER"), upsertProfileByAdmin);
-router.post("/import", authenticate, authorizeRoles("ADMIN", "ICT_OFFICER"), importProfilesByAdmin);
-router.get("/:userId", authenticate, authorizeRoles("ADMIN", "ICT_OFFICER"), getProfileByUserId);
-router.delete("/:userId", authenticate, authorizeRoles("ADMIN", "ICT_OFFICER"), deleteProfileByUserId);
+router.get("/", authenticate, authorizeRoles("ADMIN"), getAllProfiles);
+router.post("/admin-upsert", authenticate, authorizeRoles("ADMIN"), upsertProfileByAdmin);
+router.post("/import", authenticate, authorizeRoles("ADMIN"), importProfilesByAdmin);
+router.post("/sync-programs", authenticate, authorizeRoles("ADMIN"), syncProfilesToPrograms);
+router.get("/:userId", authenticate, authorizeRoles("ADMIN"), getProfileByUserId);
+router.delete("/:userId", authenticate, authorizeRoles("ADMIN"), deleteProfileByUserId);
 
 export default router;

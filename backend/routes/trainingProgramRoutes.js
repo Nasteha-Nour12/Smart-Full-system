@@ -14,40 +14,40 @@ import {
 
 const router = express.Router();
 
-router.post("/", authenticate, authorizeRoles("JOB_SEEKER", "ADMIN", "ICT_OFFICER"), createTrainingProgram);
-router.get("/me", authenticate, authorizeRoles("JOB_SEEKER"), getMyTrainingPrograms);
-router.patch("/me/cancel/:id", authenticate, authorizeRoles("JOB_SEEKER"), cancelMyTrainingProgram);
+router.post("/", authenticate, authorizeRoles("VISITOR", "ADMIN"), createTrainingProgram);
+router.get("/me", authenticate, authorizeRoles("VISITOR"), getMyTrainingPrograms);
+router.patch("/me/cancel/:id", authenticate, authorizeRoles("VISITOR"), cancelMyTrainingProgram);
 
 router.get(
   "/",
   authenticate,
-  authorizeRoles("ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
+  authorizeRoles("ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
   getAllTrainingPrograms
 );
 router.get(
   "/:id",
   authenticate,
-  authorizeRoles("ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
+  authorizeRoles("ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
   getTrainingProgramById
 );
 router.put(
   "/:id",
   authenticate,
-  authorizeRoles("ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
+  authorizeRoles("ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
   updateTrainingProgram
 );
 router.patch(
   "/:id/status",
   authenticate,
-  authorizeRoles("ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
+  authorizeRoles("ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
   updateTrainingStatus
 );
 router.post(
   "/import",
   authenticate,
-  authorizeRoles("ADMIN", "ICT_OFFICER", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
+  authorizeRoles("ADMIN", "EMPLOYER", "INTERNSHIP_EMPLOYER"),
   importTrainingPrograms
 );
-router.delete("/:id", authenticate, authorizeRoles("ADMIN", "ICT_OFFICER"), deleteTrainingProgram);
+router.delete("/:id", authenticate, authorizeRoles("ADMIN"), deleteTrainingProgram);
 
 export default router;

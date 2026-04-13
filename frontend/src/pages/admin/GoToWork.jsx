@@ -34,6 +34,7 @@ const GoToWork = () => {
     notes: "",
   });
   const [createForm, setCreateForm] = useState({
+    idNo: "",
     fullName: "",
     contact: "",
     notes: "",
@@ -126,6 +127,7 @@ const GoToWork = () => {
       });
       setOpenCreate(false);
       setCreateForm({
+        idNo: "",
         fullName: "",
         contact: "",
         notes: "",
@@ -177,6 +179,7 @@ const GoToWork = () => {
           <table className="w-full text-sm">
             <thead className="bg-slate-100">
               <tr>
+                <th className="p-3 text-left">ID No</th>
                 <th className="p-3 text-left">Candidate</th>
                 <th className="p-3 text-left">Status</th>
                 <th className="p-3 text-left">Placement</th>
@@ -191,12 +194,14 @@ const GoToWork = () => {
                   const key = search.toLowerCase();
                   if (!key) return true;
                   return (
+                    String(request.idNo || "").toLowerCase().includes(key) ||
                     String(request.candidateId?.fullName || "").toLowerCase().includes(key) ||
                     String(request.candidateId?.phone || request.candidateId?.email || "").toLowerCase().includes(key)
                   );
                 })
                 .map((request) => (
                 <tr key={request._id} className="border-t">
+                  <td className="p-3 font-medium text-slate-800">{request.idNo || "-"}</td>
                   <td className="p-3">
                     <p className="font-medium">
                       {request.candidateId?.fullName || "-"}
@@ -227,7 +232,7 @@ const GoToWork = () => {
               ))}
               {requests.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-4 text-center text-slate-500">
+                  <td colSpan={7} className="p-4 text-center text-slate-500">
                     No requests found
                   </td>
                 </tr>
@@ -240,6 +245,14 @@ const GoToWork = () => {
       <Modal open={!!selected} title="Manage Go To Work" onClose={() => setSelected(null)} footer={null}>
         {selected ? (
           <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">ID No</label>
+              <input
+                className="w-full rounded border border-slate-300 px-3 py-2 bg-slate-50 text-slate-600"
+                value={selected.idNo || "-"}
+                disabled
+              />
+            </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Status</label>
               <select
@@ -334,6 +347,7 @@ const GoToWork = () => {
 
       <Modal open={openCreate} title="Add Shaqo Tag" onClose={() => setOpenCreate(false)} footer={null} size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
+          <Input label="ID No" value={createForm.idNo || ""} placeholder="Auto generated" disabled />
           <div className="grid gap-3 md:grid-cols-2">
             <Input
               label="Full Name"

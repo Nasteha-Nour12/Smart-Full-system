@@ -7,6 +7,7 @@ const roleSchema = z.object({
   description: z.string().trim().max(200).optional(),
   pages: z.array(z.enum(PAGE_ACCESS)).min(1),
 });
+const DISABLED_ROLES = ["JOB_SEEKER", "ICT_OFFICER"];
 
 const ensureDefaultRole = async () => {
   await RoleConfig.findOneAndUpdate(
@@ -24,7 +25,7 @@ const ensureDefaultRole = async () => {
 export const getRoleConfigs = async (_req, res) => {
   try {
     await ensureDefaultRole();
-    const roles = await RoleConfig.find().sort({ isSystem: -1, name: 1 });
+    const roles = await RoleConfig.find({ name: { $nin: DISABLED_ROLES } }).sort({ isSystem: -1, name: 1 });
     res.json({ success: true, data: roles, pageAccessOptions: PAGE_ACCESS });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -43,6 +44,9 @@ export const createRoleConfig = async (req, res) => {
       name: parsed.data.name.toUpperCase().replace(/\s+/g, "_"),
       description: parsed.data.description || "",
     };
+    if (DISABLED_ROLES.includes(payload.name)) {
+      return res.status(400).json({ success: false, message: `${payload.name} role is disabled` });
+    }
 
     const exists = await RoleConfig.findOne({ name: payload.name });
     if (exists) {
@@ -67,6 +71,9 @@ export const updateRoleConfig = async (req, res) => {
     if (!role) return res.status(404).json({ success: false, message: "Role not found" });
 
     const nextName = parsed.data.name.toUpperCase().replace(/\s+/g, "_");
+    if (DISABLED_ROLES.includes(nextName)) {
+      return res.status(400).json({ success: false, message: `${nextName} role is disabled` });
+    }
     if (role.isSystem && nextName !== role.name) {
       return res.status(400).json({ success: false, message: "System role name cannot be changed" });
     }

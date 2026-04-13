@@ -4,6 +4,7 @@ import User from "../model/User.js";
 import TrainingProgram from "../model/TrainingProgram.js";
 import Internship from "../model/Internship.js";
 import GoToWork from "../model/GoToWork.js";
+import HospitalityProgram from "../model/HospitalityProgram.js";
 import Company from "../model/Company.js";
 import { getField, toSkillsArray } from "../utils/importHelpers.js";
 import { applyCandidateProgramLogic } from "../utils/candidateProgramLogic.js";
@@ -81,7 +82,12 @@ const ensureTrainingForCandidate = async (profile) => {
 const ensureProgramPlacement = async (profile) => {
   const selected = String(profile.selectedProgram || "").toUpperCase();
   const assigned = String(profile.assignedProgram || "").toUpperCase();
-  const target = assigned || selected;
+  const hospitalityType = String(profile.hospitalityType || "").toUpperCase();
+  let target = assigned || selected;
+
+  if (!target || target === "VISITOR" || target === "CANDIDATE") {
+    target = "INTERNSHIP";
+  }
 
   if (target === "INTERNSHIP") {
     const existing = await Internship.findOne({ candidateId: profile.userId });
@@ -117,11 +123,48 @@ const ensureProgramPlacement = async (profile) => {
     const existing = await GoToWork.findOne({ candidateId: profile.userId });
     if (!existing) {
       await GoToWork.create({
+        idNo: await ensurePrefixedIdNo(GoToWork, "", "GTW"),
         candidateId: profile.userId,
         status: "SUBMITTED",
         readinessStatus: "PENDING",
         interviewStatus: "NOT_SCHEDULED",
         placementStatus: "IN_QUEUE",
+        notes: "Auto-created from Visitors module",
+      });
+    }
+    return;
+  }
+
+  if (target === "HOSPITALITY") {
+    const existing = await HospitalityProgram.findOne({
+      $or: [
+        { candidateId: profile.userId },
+        profile.idNo ? { idNo: profile.idNo } : null,
+      ].filter(Boolean),
+    });
+    if (!existing) {
+      const normalizedType = hospitalityType || "NO_SKILL";
+      const assignedResult =
+        normalizedType === "NO_SKILL"
+          ? "TRAINING"
+          : normalizedType === "HAVE_SKILL_NO_EXPERIENCE"
+            ? "INTERNSHIP_RECOMMENDATION"
+            : "GO_TO_WORK_RECOMMENDATION";
+      await HospitalityProgram.create({
+        candidateId: profile.userId,
+        idNo: await ensurePrefixedIdNo(HospitalityProgram, "", "HOS"),
+        fullName: profile.userId?.fullName || profile.fullName || "Visitor",
+        gender: profile.gender || "OTHER",
+        contact: profile.contact || profile.userId?.phone || profile.userId?.email || "N/A",
+        district: profile.district || "N/A",
+        educationLevel: profile.educationLevel || profile.education || "NONE",
+        faculty: profile.faculty || "N/A",
+        otherSkills: profile.skills?.map((s) => s.name) || [],
+        hospitalityType: normalizedType,
+        assignedResult,
+        duration: normalizedType === "NO_SKILL" ? "2 Months" : "",
+        fee: normalizedType === "NO_SKILL" ? 60 : 0,
+        status: "PENDING",
         notes: "Auto-created from Visitors module",
       });
     }
@@ -177,7 +220,9 @@ const createCandidateUserIfMissing = async ({ contact, email, phone, fullName, i
     email: finalEmail || undefined,
     phone: finalPhone || undefined,
     passwordHash: randomPassword,
-    role: "JOB_SEEKER",
+    role: "VISITOR",
+    accessRole: "VISITOR",
+    pageAccess: [],
     status: "ACTIVE",
   });
   return created._id;
@@ -189,9 +234,44 @@ const ensureCandidateRole = async (userId) => {
   if (!user) return;
   const email = String(user.email || "").toLowerCase();
   const looksLikeImportedCandidate = email.startsWith("candidate.") && email.endsWith("@smartses.local");
-  if (looksLikeImportedCandidate && user.role !== "JOB_SEEKER") {
-    user.role = "JOB_SEEKER";
+  if (looksLikeImportedCandidate && user.role !== "VISITOR") {
+    user.role = "VISITOR";
+  }
+  if (user.role === "VISITOR") {
+    user.accessRole = "VISITOR";
+    user.pageAccess = [];
+  }
+  if (user.isModified()) {
     await user.save();
+  }
+};
+
+const normalizeLegacyProgramFields = async (profile) => {
+  const selected = String(profile.selectedProgram || "").toUpperCase();
+  const assigned = String(profile.assignedProgram || "").toUpperCase();
+  let changed = false;
+
+  if (!selected || selected === "VISITOR" || selected === "CANDIDATE") {
+    profile.selectedProgram = "INTERNSHIP";
+    changed = true;
+  }
+
+  if (!assigned || assigned === "VISITOR" || assigned === "CANDIDATE") {
+    if (String(profile.selectedProgram || "").toUpperCase() === "INTERNSHIP") {
+      profile.assignedProgram = "INTERNSHIP";
+      changed = true;
+    }
+  }
+
+  if (String(profile.selectedProgram || "").toUpperCase() === "HOSPITALITY" && !profile.hospitalityType) {
+    profile.hospitalityType = "NO_SKILL";
+    changed = true;
+  }
+
+  if (changed) {
+    const normalized = withDocumentStatuses(withProgramLogic(profile.toObject()));
+    Object.assign(profile, normalized);
+    await profile.save();
   }
 };
 
@@ -631,7 +711,7 @@ export const importProfilesByAdmin = async (req, res) => {
           educationLevel: String(getField(row, ["educationLevel", "education level"])).trim(),
           faculty: String(getField(row, ["faculty"])).trim(),
           otherSkills: toSkillsArray(getField(row, ["otherSkills", "other skills"])),
-          selectedProgram: String(getField(row, ["selectedProgram", "selected program"], "VISITOR")).toUpperCase(),
+          selectedProgram: String(getField(row, ["selectedProgram", "selected program"], "INTERNSHIP")).toUpperCase(),
           hospitalityType: String(getField(row, ["hospitalityType", "hospitality type"], "")).toUpperCase(),
           candidateStatus: String(getField(row, ["candidateStatus", "candidate status"], "NEW")).toUpperCase(),
           trainingStatus: String(getField(row, ["trainingStatus", "training status"], "PENDING")).toUpperCase(),
@@ -681,5 +761,46 @@ export const importProfilesByAdmin = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const syncProfilesToPrograms = async (_req, res) => {
+  try {
+    const profiles = await CandidateProfile.find()
+      .populate("userId", "fullName email role phone")
+      .sort({ createdAt: -1 });
+
+    let updatedProfiles = 0;
+    for (const profile of profiles) {
+      await ensureCandidateRole(profile.userId?._id || profile.userId);
+      const beforeSelected = String(profile.selectedProgram || "").toUpperCase();
+      const beforeAssigned = String(profile.assignedProgram || "").toUpperCase();
+      await normalizeLegacyProgramFields(profile);
+      const afterSelected = String(profile.selectedProgram || "").toUpperCase();
+      const afterAssigned = String(profile.assignedProgram || "").toUpperCase();
+      if (beforeSelected !== afterSelected || beforeAssigned !== afterAssigned) {
+        updatedProfiles += 1;
+      }
+      await ensureTrainingForCandidate(profile);
+      await ensureProgramPlacement(profile);
+    }
+
+    const [internships, goToWork, hospitality] = await Promise.all([
+      Internship.countDocuments(),
+      GoToWork.countDocuments(),
+      HospitalityProgram.countDocuments(),
+    ]);
+
+    res.json({
+      success: true,
+      message: "Visitors synced to program modules successfully",
+      data: {
+        scannedProfiles: profiles.length,
+        updatedProfiles,
+        totals: { internships, goToWork, hospitality },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

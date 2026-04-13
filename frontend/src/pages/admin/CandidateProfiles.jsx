@@ -11,12 +11,13 @@ import {
   getAllCandidateProfilesRequest,
   getCandidateProfileByUserIdRequest,
   importCandidateProfilesRequest,
+  syncCandidateProfilesProgramsRequest,
   upsertCandidateProfileByAdminRequest,
 } from "../../api/candidateProfiles.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 import { addNotification } from "../../utils/notifications";
 
-const selectedPrograms = ["VISITOR", "INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
+const selectedPrograms = ["INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
 const hospitalityTypes = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE"];
 const trainingStatuses = ["PENDING", "SCHEDULED", "ATTENDING", "COMPLETED", "FAILED", "ABSENT"];
 const educationLevels = ["NONE", "BACHELOR_DEGREE"];
@@ -30,7 +31,7 @@ const emptyForm = {
   educationLevel: "",
   faculty: "",
   otherSkills: "",
-  selectedProgram: "VISITOR",
+  selectedProgram: "INTERNSHIP",
   hospitalityType: "",
   candidateStatus: "NEW",
   trainingStatus: "PENDING",
@@ -152,7 +153,7 @@ const CandidateProfiles = () => {
         educationLevel: p.educationLevel || p.education || "",
         faculty: p.faculty || "",
         otherSkills: (p.skills || []).map((s) => s.name).join(", "),
-        selectedProgram: p.selectedProgram || "VISITOR",
+        selectedProgram: p.selectedProgram || "INTERNSHIP",
         hospitalityType: p.hospitalityType || "",
         candidateStatus: p.candidateStatus || "NEW",
         trainingStatus: p.trainingStatus || "PENDING",
@@ -216,15 +217,35 @@ const CandidateProfiles = () => {
     }
   };
 
+  const handleSyncPrograms = async () => {
+    try {
+      setSaving(true);
+      const res = await syncCandidateProfilesProgramsRequest();
+      const scanned = res?.data?.scannedProfiles ?? 0;
+      const updated = res?.data?.updatedProfiles ?? 0;
+      toast.success(`Sync done. Scanned: ${scanned}, Updated: ${updated}`);
+      await load();
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to sync visitors to modules"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
       <PageTitle title="Visitor Profiles" subtitle="Register, filter, and manage visitor records">
-        <Button onClick={openCreate}>Register Visitor</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={handleSyncPrograms} loading={saving}>
+            Sync To Modules
+          </Button>
+          <Button onClick={openCreate}>Register Visitor</Button>
+        </div>
       </PageTitle>
 
       <ExcelImportPanel
         title="Excel Import - Visitor Registration"
-        description="Columns: idNo(optional), fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram, hospitalityType, candidateStatus, trainingFee, programFee."
+        description="Columns: idNo(optional), fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram(INTERNSHIP/HOSPITALITY/GO_TO_WORK), hospitalityType, candidateStatus, trainingFee, programFee."
         onImport={async (rows) => {
           const res = await importCandidateProfilesRequest(rows);
           await load();

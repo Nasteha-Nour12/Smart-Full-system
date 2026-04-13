@@ -4,9 +4,9 @@ import Button from "../../components/ui/Button";
 
 const modules = [
   {
-    title: "Candidate Profiles",
+    title: "Visitor Profiles",
     route: "/admin/candidate-profiles",
-    description: "Bulk import candidate registration records.",
+    description: "Bulk import visitor registration records.",
     headers: [
       "idNo",
       "fullName",

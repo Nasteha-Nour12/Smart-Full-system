@@ -11,6 +11,7 @@ const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const NAME_REGEX = /^[A-Za-z]+(?:[ .'-][A-Za-z]+)*$/;
 const PHONE_REGEX = /^\+?\d{7,15}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+const DISABLED_ACCESS_ROLES = ["JOB_SEEKER", "ICT_OFFICER"];
 
 const fullNameSchema = z
   .string()
@@ -42,6 +43,9 @@ const signToken = (user) =>
 
 const resolveAccessRole = async (accessRoleRaw) => {
   const normalized = String(accessRoleRaw || "ADMIN").trim().toUpperCase();
+  if (DISABLED_ACCESS_ROLES.includes(normalized)) {
+    throw new Error(`Access role ${normalized} is disabled`);
+  }
   if (normalized === "ADMIN") {
     await RoleConfig.findOneAndUpdate(
       { name: "ADMIN" },
@@ -227,9 +231,9 @@ export const loginUser = async (req, res) => {
 };
 
 export const getAllUsers = async (_req, res) => {
-  const users = await User.find({
-    email: { $not: /^candidate\..+@smartses\.local$/i },
-  }).select("-passwordHash -resetPasswordTokenHash -resetPasswordExpiresAt");
+  const users = await User.find({ role: "ADMIN" })
+    .select("-passwordHash -resetPasswordTokenHash -resetPasswordExpiresAt")
+    .sort({ createdAt: -1 });
   res.json({ success: true, data: users });
 };
 

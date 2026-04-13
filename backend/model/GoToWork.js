@@ -12,11 +12,12 @@ const GTW_STATUS = [
 
 const goToWorkSchema = new mongoose.Schema(
   {
+    idNo: { type: String, trim: true, unique: true, sparse: true },
     candidateId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // ama CandidateProfile
       required: true,
-      unique: true, // ✅ hal candidate = hal active request (waad ka saari kartaa haddii aad rabto multiple)
+      unique: true,
     },
 
     status: {

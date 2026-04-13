@@ -242,7 +242,12 @@ const Hospitality = () => {
       <Modal open={openForm} title={editingId ? "Edit Hospitality" : "Create Hospitality"} onClose={() => setOpenForm(false)} footer={null} size="xl">
         <form onSubmit={onSave} className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
-            <Input label="ID No" value={form.idNo} onChange={(e) => setForm((p) => ({ ...p, idNo: e.target.value }))} required />
+            <Input
+              label="ID No"
+              value={form.idNo || ""}
+              placeholder="Auto generated"
+              disabled
+            />
             <Input
               label="Full Name"
               value={form.fullName}

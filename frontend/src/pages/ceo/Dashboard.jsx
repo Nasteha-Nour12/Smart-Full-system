@@ -32,7 +32,7 @@ const Dashboard = () => {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <StatCard label="Users" value={data.totals.users} />
             <StatCard label="Companies" value={data.totals.companies} />
-            <StatCard label="Candidate Profiles" value={data.totals.candidateProfiles} />
+            <StatCard label="Visitor Profiles" value={data.totals.candidateProfiles} />
             <StatCard label="Internships" value={data.totals.internships} />
             <StatCard label="Pending Approvals" value={data.totals.pendingApprovals} />
           </div>
