@@ -66,7 +66,7 @@ const Login = () => {
           <Input
             name="password"
             type="password"
-            placeholder="Enter password"
+            placeholder="Enter passwords"
             value={form.password}
             onChange={handleChange}
             className="border-white bg-white text-slate-900 placeholder:text-slate-500 focus:border-cyan-400 focus:ring-cyan-100"
