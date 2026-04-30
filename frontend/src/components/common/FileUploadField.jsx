@@ -22,7 +22,7 @@ const FileUploadField = ({
     try {
       setUploading(true);
       const res = await uploadSingleFileRequest(file);
-      onUploaded?.(res.data?.url || "");
+      onUploaded?.(res?.url || res?.data?.url || "");
     } catch (error) {
       alert(getErrorMessage(error, "Failed to upload file"));
     } finally {
