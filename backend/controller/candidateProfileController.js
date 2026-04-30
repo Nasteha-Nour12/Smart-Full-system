@@ -8,7 +8,13 @@ import HospitalityProgram from "../model/HospitalityProgram.js";
 import Company from "../model/Company.js";
 import { getField, toSkillsArray } from "../utils/importHelpers.js";
 import { applyCandidateProgramLogic } from "../utils/candidateProgramLogic.js";
-import { ensurePrefixedIdNo } from "../utils/idGenerator.js";
+import { ensurePrefixedIdNo, generatePrefixedIdNo } from "../utils/idGenerator.js";
+
+const PROGRAM_PREFIX = {
+  INTERNSHIP: "IN",
+  GO_TO_WORK: "GTW",
+  HOSPITALITY: "HOS",
+};
 
 const normalizeObjectId = (value) => {
   const raw = String(value ?? "").trim();
@@ -20,10 +26,30 @@ const normalizeObjectId = (value) => {
 
 const getAuthUserId = (req) => normalizeObjectId(req.user?.id || req.user?._id || req.user?.sub);
 
+const getTargetProgram = (payload) => {
+  const selected = String(payload?.selectedProgram || "").toUpperCase();
+  const assigned = String(payload?.assignedProgram || "").toUpperCase();
+  const target = assigned || selected || "INTERNSHIP";
+  if (target === "HOSPITALITY") return "HOSPITALITY";
+  if (target === "GO_TO_WORK") return "GO_TO_WORK";
+  return "INTERNSHIP";
+};
+
+const getProgramPrefix = (payload) => PROGRAM_PREFIX[getTargetProgram(payload)] || "IN";
+
 const ensureTrainingForCandidate = async (profile) => {
   const selected = String(profile.selectedProgram || "").toUpperCase();
   const assigned = String(profile.assignedProgram || "").toUpperCase();
   const hospitalityType = String(profile.hospitalityType || "").toUpperCase();
+  const sharedIdNo = String(profile.idNo || "").trim();
+
+  // Keep training rows aligned with visitor/program ID.
+  if (sharedIdNo && profile.userId) {
+    await TrainingProgram.updateMany(
+      { candidateId: profile.userId, idNo: { $ne: sharedIdNo } },
+      { $set: { idNo: sharedIdNo } }
+    );
+  }
 
   if (selected === "HOSPITALITY" && hospitalityType === "NO_SKILL") {
     const existing = await TrainingProgram.findOne({
@@ -88,50 +114,87 @@ const ensureProgramPlacement = async (profile) => {
   if (!target || target === "VISITOR" || target === "CANDIDATE") {
     target = "INTERNSHIP";
   }
+  const sharedIdNo = String(profile.idNo || "").trim();
 
   if (target === "INTERNSHIP") {
-    const existing = await Internship.findOne({ candidateId: profile.userId });
-    if (!existing) {
-      const company = await Company.findOne().select("_id").lean();
-      if (!company?._id) return;
-      const startDate = new Date();
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 30);
-      await Internship.create({
-        candidateId: profile.userId,
-        companyId: company._id,
-        idNo: await ensurePrefixedIdNo(Internship, "", "IN"),
-        fullName: profile.userId?.fullName || "Visitor",
-        gender: profile.gender || "OTHER",
-        contact: profile.contact || profile.userId?.phone || profile.userId?.email || "",
-        district: profile.district || "N/A",
-        educationLevel: profile.educationLevel || profile.education || "NONE",
-        faculty: profile.faculty || "N/A",
-        otherSkills: profile.skills?.map((s) => s.name) || [],
-        position: "PENDING_ASSIGNMENT",
-        startDate,
-        endDate,
-        internshipFee: 0,
-        status: "PENDING",
-        notes: "Auto-created from Visitors module",
-      });
+    const existing = await Internship.findOne({
+      $or: [{ candidateId: profile.userId }, sharedIdNo ? { idNo: sharedIdNo } : null].filter(Boolean),
+    });
+    if (existing) {
+      if (!existing.candidateId && profile.userId) {
+        existing.candidateId = profile.userId;
+      }
+      if (sharedIdNo && String(existing.idNo || "").trim() !== sharedIdNo) {
+        existing.idNo = sharedIdNo;
+      }
+      await existing.save();
+      return;
     }
+    const company = await Company.findOne().select("_id").lean();
+    if (!company?._id) return;
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 30);
+    await Internship.create({
+      candidateId: profile.userId,
+      companyId: company._id,
+      idNo: sharedIdNo || (await ensurePrefixedIdNo(Internship, "", "IN")),
+      fullName: profile.userId?.fullName || "Visitor",
+      gender: profile.gender || "OTHER",
+      contact: profile.contact || profile.userId?.phone || profile.userId?.email || "",
+      district: profile.district || "N/A",
+      educationLevel: profile.educationLevel || profile.education || "NONE",
+      faculty: profile.faculty || "N/A",
+      otherSkills: profile.skills?.map((s) => s.name) || [],
+      position: "PENDING_ASSIGNMENT",
+      startDate,
+      endDate,
+      internshipFee: 0,
+      status: "PENDING",
+      notes: "Auto-created from Visitors module",
+    });
     return;
   }
 
   if (target === "GO_TO_WORK") {
-    const existing = await GoToWork.findOne({ candidateId: profile.userId });
-    if (!existing) {
-      await GoToWork.create({
-        idNo: await ensurePrefixedIdNo(GoToWork, "", "GTW"),
-        candidateId: profile.userId,
-        status: "SUBMITTED",
-        readinessStatus: "PENDING",
-        interviewStatus: "NOT_SCHEDULED",
-        placementStatus: "IN_QUEUE",
-        notes: "Auto-created from Visitors module",
-      });
+    const existing = await GoToWork.findOne({
+      $or: [{ candidateId: profile.userId }, sharedIdNo ? { idNo: sharedIdNo } : null].filter(Boolean),
+    });
+    if (existing) {
+      if (!existing.candidateId && profile.userId) {
+        existing.candidateId = profile.userId;
+      }
+      if (sharedIdNo && String(existing.idNo || "").trim() !== sharedIdNo) {
+        const idConflict = await GoToWork.findOne({
+          idNo: sharedIdNo,
+          _id: { $ne: existing._id },
+        })
+          .select("_id")
+          .lean();
+        if (!idConflict) {
+          existing.idNo = sharedIdNo;
+        } else {
+          await syncProfileIdNo(profile, String(existing.idNo || "").trim());
+        }
+      }
+      await existing.save();
+      return;
     }
+    let nextIdNo = sharedIdNo || (await ensurePrefixedIdNo(GoToWork, "", "GTW"));
+    const occupied = await GoToWork.findOne({ idNo: nextIdNo }).select("_id candidateId").lean();
+    if (occupied && String(occupied.candidateId || "") !== String(profile.userId || "")) {
+      nextIdNo = await ensurePrefixedIdNo(GoToWork, "", "GTW");
+      await syncProfileIdNo(profile, nextIdNo);
+    }
+    await GoToWork.create({
+      idNo: nextIdNo,
+      candidateId: profile.userId,
+      status: "SUBMITTED",
+      readinessStatus: "PENDING",
+      interviewStatus: "NOT_SCHEDULED",
+      placementStatus: "IN_QUEUE",
+      notes: "Auto-created from Visitors module",
+    });
     return;
   }
 
@@ -142,32 +205,40 @@ const ensureProgramPlacement = async (profile) => {
         profile.idNo ? { idNo: profile.idNo } : null,
       ].filter(Boolean),
     });
-    if (!existing) {
-      const normalizedType = hospitalityType || "NO_SKILL";
-      const assignedResult =
-        normalizedType === "NO_SKILL"
-          ? "TRAINING"
-          : normalizedType === "HAVE_SKILL_NO_EXPERIENCE"
-            ? "INTERNSHIP_RECOMMENDATION"
-            : "GO_TO_WORK_RECOMMENDATION";
-      await HospitalityProgram.create({
-        candidateId: profile.userId,
-        idNo: await ensurePrefixedIdNo(HospitalityProgram, "", "HOS"),
-        fullName: profile.userId?.fullName || profile.fullName || "Visitor",
-        gender: profile.gender || "OTHER",
-        contact: profile.contact || profile.userId?.phone || profile.userId?.email || "N/A",
-        district: profile.district || "N/A",
-        educationLevel: profile.educationLevel || profile.education || "NONE",
-        faculty: profile.faculty || "N/A",
-        otherSkills: profile.skills?.map((s) => s.name) || [],
-        hospitalityType: normalizedType,
-        assignedResult,
-        duration: normalizedType === "NO_SKILL" ? "2 Months" : "",
-        fee: normalizedType === "NO_SKILL" ? 60 : 0,
-        status: "PENDING",
-        notes: "Auto-created from Visitors module",
-      });
+    if (existing) {
+      if (!existing.candidateId && profile.userId) {
+        existing.candidateId = profile.userId;
+      }
+      if (sharedIdNo && String(existing.idNo || "").trim() !== sharedIdNo) {
+        existing.idNo = sharedIdNo;
+      }
+      await existing.save();
+      return;
     }
+    const normalizedType = hospitalityType || "NO_SKILL";
+    const assignedResult =
+      normalizedType === "NO_SKILL"
+        ? "TRAINING"
+        : normalizedType === "HAVE_SKILL_NO_EXPERIENCE"
+          ? "INTERNSHIP_RECOMMENDATION"
+          : "GO_TO_WORK_RECOMMENDATION";
+    await HospitalityProgram.create({
+      candidateId: profile.userId,
+      idNo: sharedIdNo || (await ensurePrefixedIdNo(HospitalityProgram, "", "HOS")),
+      fullName: profile.userId?.fullName || profile.fullName || "Visitor",
+      gender: profile.gender || "OTHER",
+      contact: profile.contact || profile.userId?.phone || profile.userId?.email || "N/A",
+      district: profile.district || "N/A",
+      educationLevel: profile.educationLevel || profile.education || "NONE",
+      faculty: profile.faculty || "N/A",
+      otherSkills: profile.skills?.map((s) => s.name) || [],
+      hospitalityType: normalizedType,
+      assignedResult,
+      duration: normalizedType === "NO_SKILL" ? "2 Months" : "",
+      fee: normalizedType === "NO_SKILL" ? 60 : 0,
+      status: "PENDING",
+      notes: "Auto-created from Visitors module",
+    });
   }
 };
 
@@ -228,6 +299,90 @@ const createCandidateUserIfMissing = async ({ contact, email, phone, fullName, i
   return created._id;
 };
 
+const createDedicatedVisitorUser = async ({ fullName, idNo }) => {
+  const candidateName = String(fullName || "Candidate").trim();
+  const uniqueToken = `${Date.now()}${Math.random().toString(36).slice(2, 8)}`.toLowerCase();
+  const cleanId = String(idNo || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  const emailBase = cleanId || "candidate";
+  const randomPassword = Math.random().toString(36).slice(-10) + "A1!";
+  const created = await User.create({
+    fullName: candidateName,
+    email: `${emailBase}.${uniqueToken}@smartses.local`,
+    passwordHash: randomPassword,
+    role: "VISITOR",
+    accessRole: "VISITOR",
+    pageAccess: [],
+    status: "ACTIVE",
+  });
+  return created._id;
+};
+
+const reserveCandidateIdNo = async ({ requestedIdNo, userId, excludeProfileId = null }) => {
+  let candidateIdNo = await ensurePrefixedIdNo(CandidateProfile, String(requestedIdNo || "").trim(), "CAN");
+  let existing = await CandidateProfile.findOne({ idNo: candidateIdNo }).select("_id userId").lean();
+
+  if (!existing) return candidateIdNo;
+
+  const sameProfile = excludeProfileId && String(existing._id) === String(excludeProfileId);
+  const sameUser = userId && existing.userId && String(existing.userId) === String(userId);
+  if (sameProfile || sameUser) return candidateIdNo;
+
+  candidateIdNo = await generatePrefixedIdNo(CandidateProfile, "CAN");
+  while (true) {
+    existing = await CandidateProfile.findOne({ idNo: candidateIdNo }).select("_id").lean();
+    if (!existing) return candidateIdNo;
+    candidateIdNo = await generatePrefixedIdNo(CandidateProfile, "CAN");
+  }
+};
+
+const reserveProgramScopedIdNo = async ({
+  requestedIdNo,
+  userId,
+  excludeProfileId = null,
+  selectedProgram,
+  assignedProgram,
+}) => {
+  const prefix = getProgramPrefix({ selectedProgram, assignedProgram });
+  const raw = String(requestedIdNo || "").trim().toUpperCase();
+  let candidateIdNo = "";
+
+  if (raw.startsWith(prefix)) {
+    candidateIdNo = raw;
+  } else if (!raw) {
+    candidateIdNo = await generatePrefixedIdNo(CandidateProfile, prefix);
+  } else {
+    // If provided ID has wrong prefix (ex: CAN013 for HOSPITALITY), generate next correct sequence.
+    candidateIdNo = await generatePrefixedIdNo(CandidateProfile, prefix);
+  }
+
+  while (true) {
+    const existing = await CandidateProfile.findOne({ idNo: candidateIdNo }).select("_id userId").lean();
+    if (!existing) return candidateIdNo;
+
+    const sameProfile = excludeProfileId && String(existing._id) === String(excludeProfileId);
+    const sameUser = userId && existing.userId && String(existing.userId) === String(userId);
+    if (sameProfile || sameUser) return candidateIdNo;
+
+    candidateIdNo = await generatePrefixedIdNo(CandidateProfile, prefix);
+  }
+};
+
+const syncProfileIdNo = async (profile, nextIdNo) => {
+  const normalized = String(nextIdNo || "").trim().toUpperCase();
+  if (!normalized || String(profile?.idNo || "").trim().toUpperCase() === normalized) return;
+  profile.idNo = normalized;
+  await profile.save();
+  if (profile.userId) {
+    await TrainingProgram.updateMany(
+      { candidateId: profile.userId, idNo: { $ne: normalized } },
+      { $set: { idNo: normalized } }
+    );
+  }
+};
+
 const ensureCandidateRole = async (userId) => {
   if (!userId) return;
   const user = await User.findById(userId);
@@ -244,6 +399,50 @@ const ensureCandidateRole = async (userId) => {
   if (user.isModified()) {
     await user.save();
   }
+};
+
+const ensureProfileUserLink = async (profile) => {
+  const existing = normalizeObjectId(profile?.userId?._id || profile?.userId);
+  if (existing) return existing;
+
+  const resolvedUserId = await resolveUser({
+    contact: profile?.contact,
+    email: profile?.userId?.email,
+    phone: profile?.userId?.phone,
+    fullName: profile?.userId?.fullName || profile?.fullName,
+  });
+
+  let userId = resolvedUserId;
+  if (!userId) {
+    userId = await createCandidateUserIfMissing({
+      contact: profile?.contact,
+      fullName: profile?.userId?.fullName || profile?.fullName,
+      idNo: profile?.idNo,
+    });
+  }
+
+  if (!userId) return null;
+
+  const occupied = await CandidateProfile.findOne({
+    userId,
+    _id: { $ne: profile._id },
+  })
+    .select("_id")
+    .lean();
+
+  if (occupied) {
+    userId = await createDedicatedVisitorUser({
+      fullName: profile?.userId?.fullName || profile?.fullName,
+      idNo: profile?.idNo,
+    });
+  }
+
+  await CandidateProfile.updateOne(
+    { _id: profile._id },
+    { $set: { userId } }
+  );
+  profile.userId = userId;
+  return userId;
 };
 
 const normalizeLegacyProgramFields = async (profile) => {
@@ -380,7 +579,12 @@ export const upsertMyProfile = async (req, res) => {
     if (!authUserId) return res.status(401).json({ success: false, message: "Invalid session. Please login again." });
 
     const payload = withDocumentStatuses(withProgramLogic({ ...req.body, userId: authUserId }));
-    payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
+    payload.idNo = await reserveProgramScopedIdNo({
+      requestedIdNo: payload.idNo,
+      userId: authUserId,
+      selectedProgram: payload.selectedProgram,
+      assignedProgram: payload.assignedProgram,
+    });
 
     const profile = await CandidateProfile.findOneAndUpdate(
       { userId: authUserId },
@@ -409,7 +613,12 @@ export const updateMyProfile = async (req, res) => {
     if (!authUserId) return res.status(401).json({ success: false, message: "Invalid session. Please login again." });
 
     const payload = withDocumentStatuses(withProgramLogic(req.body));
-    payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
+    payload.idNo = await reserveProgramScopedIdNo({
+      requestedIdNo: payload.idNo,
+      userId: authUserId,
+      selectedProgram: payload.selectedProgram,
+      assignedProgram: payload.assignedProgram,
+    });
     const profile = await CandidateProfile.findOneAndUpdate(
       { userId: authUserId },
       payload,
@@ -585,6 +794,7 @@ export const deleteProfileByUserId = async (req, res) => {
 
 export const upsertProfileByAdmin = async (req, res) => {
   try {
+    const requestedIdNo = String(req.body?.idNo || "").trim();
     let userId = await resolveUser({
       userId: req.body?.userId,
       contact: req.body?.contact,
@@ -592,10 +802,14 @@ export const upsertProfileByAdmin = async (req, res) => {
       phone: req.body?.phone,
       fullName: req.body?.fullName,
     });
-    if (!userId && req.body?.idNo) {
-      const normalizedIdNo = await ensurePrefixedIdNo(CandidateProfile, String(req.body.idNo).trim(), "CAN");
-      const existingProfile = await CandidateProfile.findOne({ idNo: normalizedIdNo });
-      if (existingProfile?.userId) userId = existingProfile.userId;
+    const normalizedRequestedIdNo = requestedIdNo
+      ? String(requestedIdNo).trim().toUpperCase()
+      : "";
+    const existingProfileByIdNo = normalizedRequestedIdNo
+      ? await CandidateProfile.findOne({ idNo: normalizedRequestedIdNo })
+      : null;
+    if (!userId && existingProfileByIdNo?.userId) {
+      userId = existingProfileByIdNo.userId;
     }
     if (!userId) {
       userId = await createCandidateUserIfMissing({
@@ -603,7 +817,7 @@ export const upsertProfileByAdmin = async (req, res) => {
         email: req.body?.email,
         phone: req.body?.phone,
         fullName: req.body?.fullName,
-        idNo: req.body?.idNo,
+        idNo: normalizedRequestedIdNo,
       });
     }
     await ensureCandidateRole(userId);
@@ -617,7 +831,12 @@ export const upsertProfileByAdmin = async (req, res) => {
       otherSkills: toSkillsArray(req.body.otherSkills),
       notes: req.body.notes || req.body.remarks || "",
     }));
-    payload.idNo = await ensurePrefixedIdNo(CandidateProfile, payload.idNo, "CAN");
+    payload.idNo = await reserveProgramScopedIdNo({
+      requestedIdNo: normalizedRequestedIdNo,
+      userId,
+      selectedProgram: payload.selectedProgram,
+      assignedProgram: payload.assignedProgram,
+    });
 
     const profile = await CandidateProfile.findOneAndUpdate(
       { userId },
@@ -653,10 +872,7 @@ export const importProfilesByAdmin = async (req, res) => {
         if (!fullName) {
           throw new Error("Required: fullName/candidate");
         }
-        const normalizedIdNo = await ensurePrefixedIdNo(CandidateProfile, idNo, "CAN");
-        const key = normalizedIdNo.toLowerCase();
-        if (seenIdNos.has(key)) throw new Error("Duplicate idNo in uploaded file");
-        seenIdNos.add(key);
+        const normalizedIdNo = idNo ? String(idNo).trim().toUpperCase() : "";
 
         const cvDoc = parseDocumentCell(getField(row, ["cv", "cvUrl", "cv url"], ""));
         const coverDoc = parseDocumentCell(getField(row, ["coverLetter", "cover letter", "coverLetterUrl"], ""));
@@ -698,12 +914,19 @@ export const importProfilesByAdmin = async (req, res) => {
         await ensureCandidateRole(userId);
         if (!userId) throw new Error("Candidate user not found");
 
-        const existingDifferent = await CandidateProfile.findOne({ idNo: normalizedIdNo, userId: { $ne: userId } });
-        if (existingDifferent) throw new Error("Duplicate idNo already used by another candidate");
+        const reservedIdNo = await reserveCandidateIdNo({
+          requestedIdNo: normalizedIdNo,
+          userId,
+        });
+        const key = reservedIdNo.toLowerCase();
+        if (seenIdNos.has(key)) {
+          throw new Error("Duplicate idNo in uploaded file");
+        }
+        seenIdNos.add(key);
 
         const payload = withDocumentStatuses(withProgramLogic({
           userId,
-          idNo: normalizedIdNo,
+          idNo: reservedIdNo,
           fullName,
           gender: String(getField(row, ["gender"], "OTHER")).toUpperCase(),
           contact,
@@ -771,18 +994,42 @@ export const syncProfilesToPrograms = async (_req, res) => {
       .sort({ createdAt: -1 });
 
     let updatedProfiles = 0;
+    const failed = [];
     for (const profile of profiles) {
-      await ensureCandidateRole(profile.userId?._id || profile.userId);
-      const beforeSelected = String(profile.selectedProgram || "").toUpperCase();
-      const beforeAssigned = String(profile.assignedProgram || "").toUpperCase();
-      await normalizeLegacyProgramFields(profile);
-      const afterSelected = String(profile.selectedProgram || "").toUpperCase();
-      const afterAssigned = String(profile.assignedProgram || "").toUpperCase();
-      if (beforeSelected !== afterSelected || beforeAssigned !== afterAssigned) {
-        updatedProfiles += 1;
+      try {
+        const linkedUserId = await ensureProfileUserLink(profile);
+        if (!linkedUserId) {
+          continue;
+        }
+        const programScopedIdNo = await reserveProgramScopedIdNo({
+          requestedIdNo: profile.idNo,
+          userId: linkedUserId,
+          excludeProfileId: profile._id,
+          selectedProgram: profile.selectedProgram,
+          assignedProgram: profile.assignedProgram,
+        });
+        if (programScopedIdNo && String(profile.idNo || "") !== programScopedIdNo) {
+          profile.idNo = programScopedIdNo;
+          await profile.save();
+        }
+        await ensureCandidateRole(linkedUserId);
+        const beforeSelected = String(profile.selectedProgram || "").toUpperCase();
+        const beforeAssigned = String(profile.assignedProgram || "").toUpperCase();
+        await normalizeLegacyProgramFields(profile);
+        const afterSelected = String(profile.selectedProgram || "").toUpperCase();
+        const afterAssigned = String(profile.assignedProgram || "").toUpperCase();
+        if (beforeSelected !== afterSelected || beforeAssigned !== afterAssigned) {
+          updatedProfiles += 1;
+        }
+        await ensureTrainingForCandidate(profile);
+        await ensureProgramPlacement(profile);
+      } catch (error) {
+        failed.push({
+          profileId: String(profile?._id || ""),
+          idNo: String(profile?.idNo || ""),
+          message: error.message,
+        });
       }
-      await ensureTrainingForCandidate(profile);
-      await ensureProgramPlacement(profile);
     }
 
     const [internships, goToWork, hospitality] = await Promise.all([
@@ -797,8 +1044,27 @@ export const syncProfilesToPrograms = async (_req, res) => {
       data: {
         scannedProfiles: profiles.length,
         updatedProfiles,
+        failedProfiles: failed.length,
+        failed,
         totals: { internships, goToWork, hospitality },
       },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getProgramModuleCounts = async (_req, res) => {
+  try {
+    const [internships, goToWork, hospitality] = await Promise.all([
+      Internship.countDocuments(),
+      GoToWork.countDocuments(),
+      HospitalityProgram.countDocuments(),
+    ]);
+
+    res.json({
+      success: true,
+      data: { internships, goToWork, hospitality },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

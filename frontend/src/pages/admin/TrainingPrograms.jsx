@@ -208,8 +208,8 @@ const TrainingPrograms = () => {
                     {row.durationDays && row.durationMonths ? " / " : ""}
                     {row.durationMonths ? `${row.durationMonths} months` : ""}
                   </td>
-                  <td className="p-3 text-right">
-                    <div className="flex flex-wrap justify-end gap-2">
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <div className="flex flex-nowrap items-center justify-end gap-2">
                       <Button variant="secondary" onClick={() => openManage(row)}>
                         Manage
                       </Button>

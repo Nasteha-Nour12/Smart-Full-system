@@ -7,6 +7,7 @@ import Modal from "../../components/ui/Modal";
 import PageTitle from "../../components/common/PageTitle";
 import {
   createHospitalityProgramRequest,
+  deleteHospitalityProgramRequest,
   getHospitalityProgramByIdRequest,
   getHospitalityProgramsRequest,
   updateHospitalityProgramRequest,
@@ -14,6 +15,7 @@ import {
 import { getErrorMessage } from "../../utils/formatters";
 
 const hospitalityTypes = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE"];
+const educationLevels = ["MASTER_DEGREE", "BACHELOR_DEGREE", "SECONDARY_LEVEL", "NONE"];
 
 const emptyForm = {
   idNo: "",
@@ -156,6 +158,23 @@ const Hospitality = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!confirm("Delete this hospitality record?")) return;
+    try {
+      setSaving(true);
+      await deleteHospitalityProgramRequest(id);
+      toast.success("Hospitality record deleted");
+      if (selected?._id === id) {
+        setSelected(null);
+      }
+      await loadData();
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to delete hospitality record"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
       <PageTitle title="Hospitality Program" subtitle="Create, edit, filter and review hospitality registrations">
@@ -165,11 +184,21 @@ const Hospitality = () => {
       <div className="mb-4 grid gap-3 rounded-xl bg-white p-4 shadow md:grid-cols-6">
         <Input label="Search (ID/Name/Contact)" value={filters.q} onChange={(e) => setFilters((p) => ({ ...p, q: e.target.value }))} />
         <Input label="District" value={filters.district} onChange={(e) => setFilters((p) => ({ ...p, district: e.target.value }))} />
-        <Input
-          label="Education Level"
-          value={filters.educationLevel}
-          onChange={(e) => setFilters((p) => ({ ...p, educationLevel: e.target.value }))}
-        />
+        <div>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Education Level</label>
+          <select
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
+            value={filters.educationLevel}
+            onChange={(e) => setFilters((p) => ({ ...p, educationLevel: e.target.value }))}
+          >
+            <option value="">All</option>
+            {educationLevels.map((level) => (
+              <option key={level} value={level}>
+                {level}
+              </option>
+            ))}
+          </select>
+        </div>
         <Input label="Faculty" value={filters.faculty} onChange={(e) => setFilters((p) => ({ ...p, faculty: e.target.value }))} />
         <div>
           <label className="mb-1 block text-sm font-semibold text-slate-700">Hospitality Type</label>
@@ -215,13 +244,16 @@ const Hospitality = () => {
                   <td className="p-3">{row.assignedResult}</td>
                   <td className="p-3">${row.fee}</td>
                   <td className="p-3">{row.status}</td>
-                  <td className="p-3 text-right">
-                    <div className="flex justify-end gap-2">
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <div className="flex flex-nowrap items-center justify-end gap-2">
                       <Button variant="secondary" onClick={() => openDetail(row._id)}>
                         Detail
                       </Button>
                       <Button variant="secondary" onClick={() => openEdit(row._id)}>
                         Edit
+                      </Button>
+                      <Button variant="danger" onClick={() => handleDelete(row._id)} loading={saving}>
+                        Delete
                       </Button>
                     </div>
                   </td>
@@ -268,13 +300,35 @@ const Hospitality = () => {
             <Input label="District" value={form.district} onChange={(e) => setForm((p) => ({ ...p, district: e.target.value }))} required />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Education Level</label>
+              <select
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                value={form.educationLevel}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    educationLevel: e.target.value,
+                    faculty: e.target.value === "NONE" ? "" : p.faculty,
+                  }))
+                }
+                required
+              >
+                <option value="">Select level</option>
+                {educationLevels.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </div>
             <Input
-              label="Education Level"
-              value={form.educationLevel}
-              onChange={(e) => setForm((p) => ({ ...p, educationLevel: e.target.value }))}
-              required
+              label="Faculty"
+              value={form.faculty}
+              onChange={(e) => setForm((p) => ({ ...p, faculty: e.target.value }))}
+              required={!!form.educationLevel && form.educationLevel !== "NONE"}
+              disabled={!form.educationLevel || form.educationLevel === "NONE"}
             />
-            <Input label="Faculty" value={form.faculty} onChange={(e) => setForm((p) => ({ ...p, faculty: e.target.value }))} required />
             <Input
               label="Other Skills"
               value={form.otherSkills}

@@ -4,9 +4,9 @@ import Loader from "../ui/Loader";
 import { DEFAULT_PAGE_ACCESS, PAGE_ACCESS_OPTIONS, hasPageAccess } from "../../constants/pageAccess";
 
 const ProtectedRoute = ({ children, roles, requiredPage }) => {
-  const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, loading, initialized } = useSelector((state) => state.auth);
 
-  if (loading) {
+  if (!initialized || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader />

@@ -2,6 +2,7 @@ import express from "express";
 import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 import {
   createHospitality,
+  deleteHospitality,
   getHospitalityList,
   getHospitalityById,
   updateHospitality,
@@ -13,6 +14,7 @@ router.post("/", authenticate, authorizeRoles("ADMIN"), createHospitality);
 router.get("/", authenticate, authorizeRoles("ADMIN"), getHospitalityList);
 router.get("/:id", authenticate, authorizeRoles("ADMIN"), getHospitalityById);
 router.put("/:id", authenticate, authorizeRoles("ADMIN"), updateHospitality);
+router.delete("/:id", authenticate, authorizeRoles("ADMIN"), deleteHospitality);
 
 export default router;
 

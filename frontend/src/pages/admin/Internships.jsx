@@ -15,6 +15,8 @@ import {
 import { getCompaniesRequest } from "../../api/companies.api";
 import { formatDate, getErrorMessage } from "../../utils/formatters";
 
+const internshipStatuses = ["PENDING", "COMPLETED"];
+
 const Internships = () => {
   const [internships, setInternships] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -174,9 +176,9 @@ const Internships = () => {
                   </td>
                   <td className="p-3">{internship.status}</td>
                   <td className="p-3">${internship.internshipFee || 0}</td>
-                  <td className="p-3 text-right">
-                    <div className="flex flex-wrap justify-end gap-2 md:justify-end">
-                      {["PENDING", "ACTIVE", "COMPLETED"].map((status) => (
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <div className="flex flex-nowrap items-center justify-end gap-2 md:justify-end">
+                      {internshipStatuses.map((status) => (
                         <Button
                           key={status}
                           variant="secondary"

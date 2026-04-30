@@ -31,6 +31,11 @@ export const getAllCandidateProfilesRequest = async (params = {}) => {
   return res.data;
 };
 
+export const getCandidateProfileModuleCountsRequest = async () => {
+  const res = await api.get("/candidate-profiles/module-counts");
+  return res.data;
+};
+
 export const getCandidateProfileByUserIdRequest = async (userId) => {
   const res = await api.get(`/candidate-profiles/${userId}`);
   return res.data;

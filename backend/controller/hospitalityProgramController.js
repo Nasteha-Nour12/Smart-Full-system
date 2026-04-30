@@ -167,3 +167,13 @@ export const updateHospitality = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+export const deleteHospitality = async (req, res) => {
+  try {
+    const deleted = await HospitalityProgram.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ success: false, message: "Hospitality record not found" });
+    res.json({ success: true, message: "Hospitality record deleted" });
+  } catch {
+    res.status(400).json({ success: false, message: "Invalid ID" });
+  }
+};

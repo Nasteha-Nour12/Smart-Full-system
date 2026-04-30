@@ -20,3 +20,8 @@ export const updateHospitalityProgramRequest = async (id, data) => {
   return res.data;
 };
 
+export const deleteHospitalityProgramRequest = async (id) => {
+  const res = await api.delete(`/hospitality-programs/${id}`);
+  return res.data;
+};
+

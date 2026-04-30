@@ -15,25 +15,44 @@ import hospitalityProgramRoutes from "./routes/hospitalityProgramRoutes.js";
 import roleConfigRoutes from "./routes/roleConfigRoutes.js";
 import cookieParser from 'cookie-parser';
 import cors from "cors"
+import mongoose from "mongoose";
 const app = express();
 const PORT = port
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const isProduction = String(process.env.NODE_ENV || "").toLowerCase() === "production";
 
 app.use(express.json());
 app.use(cookieParser());
 
-const allowedOrigins = [
+const staticAllowedOrigins = [
   "http://localhost:5173",
-  "http://64.226.100.229",
   "http://127.0.0.1:5173",
+  "http://64.226.100.229",
   "https://smart-full-system.onrender.com",
 ];
+
+const envAllowedOrigins = String(process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([
+  ...(isProduction ? [] : staticAllowedOrigins),
+  ...envAllowedOrigins,
+]);
+const localhostPortPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+      if (!isProduction && localhostPortPattern.test(origin)) {
         return callback(null, true);
       }
       return callback(new Error("CORS blocked for this origin"));
@@ -50,6 +69,22 @@ app.get("/", (_req, res) => {
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ ok: true, message: "Backend connected" });
+});
+
+app.get("/api/health/full", (_req, res) => {
+  const stateMap = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting",
+  };
+  const dbState = mongoose.connection.readyState;
+  res.status(200).json({
+    ok: true,
+    backend: "connected",
+    database: stateMap[dbState] || "unknown",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.use('/api/users', userRouter);

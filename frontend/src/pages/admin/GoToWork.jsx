@@ -16,6 +16,9 @@ import {
 } from "../../api/goToWork.api";
 import { formatDateTime, getErrorMessage } from "../../utils/formatters";
 
+const goToWorkStatuses = ["SUBMITTED", "INTERVIEW", "PLACED", "REJECTED"];
+const quickStatuses = ["INTERVIEW", "PLACED", "REJECTED"];
+
 const GoToWork = () => {
   const [requests, setRequests] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -151,7 +154,7 @@ const GoToWork = () => {
 
   return (
     <div>
-      <PageTitle title="Shaqo Tag" subtitle="Handle job-placement requests and company matching">
+      <PageTitle title="Shaqo Tag" subtitle="Handle job-placement requests and outcomes">
         <Button onClick={() => setOpenCreate(true)}>Add Shaqo Tag</Button>
       </PageTitle>
       <ExcelImportPanel
@@ -212,12 +215,12 @@ const GoToWork = () => {
                   <td className="p-3">{request.placementStatus || "-"}</td>
                   <td className="p-3">{request.matchedCompanyId?.name || "-"}</td>
                   <td className="p-3">{formatDateTime(request.interviewDate)}</td>
-                  <td className="p-3 text-right">
-                    <div className="flex flex-wrap justify-end gap-2">
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <div className="flex flex-nowrap items-center justify-end gap-2">
                       <Button variant="secondary" onClick={() => openManage(request)}>
                         Manage
                       </Button>
-                      {["SCREENING", "MATCHING", "INTERVIEW", "PLACED", "REJECTED"].map((status) => (
+                      {quickStatuses.map((status) => (
                         <Button
                           key={status}
                           variant="secondary"
@@ -260,13 +263,11 @@ const GoToWork = () => {
                 value={form.status}
                 onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
               >
-                <option value="SUBMITTED">SUBMITTED</option>
-                <option value="SCREENING">SCREENING</option>
-                <option value="MATCHING">MATCHING</option>
-                <option value="INTERVIEW">INTERVIEW</option>
-                <option value="CONTRACT">CONTRACT</option>
-                <option value="PLACED">PLACED</option>
-                <option value="REJECTED">REJECTED</option>
+                {goToWorkStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -368,13 +369,11 @@ const GoToWork = () => {
                 value={createForm.status}
                 onChange={(event) => setCreateForm((prev) => ({ ...prev, status: event.target.value }))}
               >
-                <option value="SUBMITTED">SUBMITTED</option>
-                <option value="SCREENING">SCREENING</option>
-                <option value="MATCHING">MATCHING</option>
-                <option value="INTERVIEW">INTERVIEW</option>
-                <option value="CONTRACT">CONTRACT</option>
-                <option value="PLACED">PLACED</option>
-                <option value="REJECTED">REJECTED</option>
+                {goToWorkStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

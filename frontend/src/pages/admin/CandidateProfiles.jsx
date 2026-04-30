@@ -9,6 +9,7 @@ import ExcelImportPanel from "../../components/common/ExcelImportPanel";
 import {
   deleteCandidateProfileByUserIdRequest,
   getAllCandidateProfilesRequest,
+  getCandidateProfileModuleCountsRequest,
   getCandidateProfileByUserIdRequest,
   importCandidateProfilesRequest,
   syncCandidateProfilesProgramsRequest,
@@ -20,7 +21,7 @@ import { addNotification } from "../../utils/notifications";
 const selectedPrograms = ["INTERNSHIP", "HOSPITALITY", "GO_TO_WORK"];
 const hospitalityTypes = ["NO_SKILL", "HAVE_SKILL_NO_EXPERIENCE", "HAVE_SKILL_AND_EXPERIENCE"];
 const trainingStatuses = ["PENDING", "SCHEDULED", "ATTENDING", "COMPLETED", "FAILED", "ABSENT"];
-const educationLevels = ["NONE", "BACHELOR_DEGREE"];
+const educationLevels = ["MASTER_DEGREE", "BACHELOR_DEGREE", "SECONDARY_LEVEL", "NONE"];
 
 const emptyForm = {
   idNo: "",
@@ -90,6 +91,11 @@ const CandidateProfiles = () => {
   const [selected, setSelected] = useState(null);
   const [openForm, setOpenForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [moduleCounts, setModuleCounts] = useState({
+    internships: 0,
+    goToWork: 0,
+    hospitality: 0,
+  });
   const [filters, setFilters] = useState({
     search: "",
     district: "",
@@ -103,14 +109,22 @@ const CandidateProfiles = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await getAllCandidateProfilesRequest({
-        district: filters.district || undefined,
-        educationLevel: filters.educationLevel || undefined,
-        faculty: filters.faculty || undefined,
-        selectedProgram: filters.selectedProgram || undefined,
-        trainingStatus: filters.trainingStatus || undefined,
+      const [profilesRes, countsRes] = await Promise.all([
+        getAllCandidateProfilesRequest({
+          district: filters.district || undefined,
+          educationLevel: filters.educationLevel || undefined,
+          faculty: filters.faculty || undefined,
+          selectedProgram: filters.selectedProgram || undefined,
+          trainingStatus: filters.trainingStatus || undefined,
+        }),
+        getCandidateProfileModuleCountsRequest(),
+      ]);
+      setProfiles(profilesRes.data || []);
+      setModuleCounts({
+        internships: Number(countsRes?.data?.internships || 0),
+        goToWork: Number(countsRes?.data?.goToWork || 0),
+        hospitality: Number(countsRes?.data?.hospitality || 0),
       });
-      setProfiles(res.data || []);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load candidate profiles"));
     } finally {
@@ -196,6 +210,28 @@ const CandidateProfiles = () => {
     setForm((prev) => deriveProgramValues({ ...prev, ...patch }));
   };
 
+  const runAutoSync = async () => {
+    const res = await syncCandidateProfilesProgramsRequest();
+    const failed = Number(res?.data?.failedProfiles || 0);
+    const totals = res?.data?.totals;
+    if (totals) {
+      setModuleCounts({
+        internships: Number(totals.internships || 0),
+        goToWork: Number(totals.goToWork || 0),
+        hospitality: Number(totals.hospitality || 0),
+      });
+    }
+    if (failed > 0) {
+      const firstError = res?.data?.failed?.[0]?.message;
+      toast.error(
+        firstError
+          ? `Visitor sync: ${failed} failed. First issue: ${firstError}`
+          : `Visitor sync completed with ${failed} failed profile(s).`
+      );
+    }
+    return res;
+  };
+
   const handleSave = async (event) => {
     event.preventDefault();
     try {
@@ -209,6 +245,11 @@ const CandidateProfiles = () => {
       addNotification({ title: "Visitor Saved", message: "Visitor profile was saved successfully.", type: "success" });
       setOpenForm(false);
       setForm(emptyForm);
+      try {
+        await runAutoSync();
+      } catch (err) {
+        toast.error(getErrorMessage(err, "Visitor saved, but module sync failed."));
+      }
       await load();
     } catch (err) {
       toast.error(getErrorMessage(err, "Failed to save candidate registration"));
@@ -217,30 +258,10 @@ const CandidateProfiles = () => {
     }
   };
 
-  const handleSyncPrograms = async () => {
-    try {
-      setSaving(true);
-      const res = await syncCandidateProfilesProgramsRequest();
-      const scanned = res?.data?.scannedProfiles ?? 0;
-      const updated = res?.data?.updatedProfiles ?? 0;
-      toast.success(`Sync done. Scanned: ${scanned}, Updated: ${updated}`);
-      await load();
-    } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to sync visitors to modules"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <div>
       <PageTitle title="Visitor Profiles" subtitle="Register, filter, and manage visitor records">
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={handleSyncPrograms} loading={saving}>
-            Sync To Modules
-          </Button>
-          <Button onClick={openCreate}>Register Visitor</Button>
-        </div>
+        <Button onClick={openCreate}>Register Visitor</Button>
       </PageTitle>
 
       <ExcelImportPanel
@@ -248,24 +269,51 @@ const CandidateProfiles = () => {
         description="Columns: idNo(optional), fullName, gender, contact, district, educationLevel, faculty, otherSkills, selectedProgram(INTERNSHIP/HOSPITALITY/GO_TO_WORK), hospitalityType, candidateStatus, trainingFee, programFee."
         onImport={async (rows) => {
           const res = await importCandidateProfilesRequest(rows);
+          try {
+            await runAutoSync();
+          } catch (err) {
+            toast.error(getErrorMessage(err, "Import succeeded, but module sync failed."));
+          }
           await load();
           return res;
         }}
       />
 
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Internships</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{moduleCounts.internships}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Shaqo Tag</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{moduleCounts.goToWork}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hospitality</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{moduleCounts.hospitality}</p>
+        </div>
+      </div>
+
       <div className="mb-4 grid gap-3 rounded-xl bg-white p-4 shadow md:grid-cols-6">
-        <Input
-          label="Search (ID/Name/Contact)"
-          value={filters.search}
-          onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-        />
-        <Input
-          label="District"
-          value={filters.district}
-          onChange={(e) => setFilters((prev) => ({ ...prev, district: e.target.value }))}
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="min-h-10 text-sm font-semibold text-slate-700">Search</label>
+          <input
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            placeholder="ID / Name / Contact"
+            value={filters.search}
+            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="min-h-10 text-sm font-semibold text-slate-700">District</label>
+          <input
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            value={filters.district}
+            onChange={(e) => setFilters((prev) => ({ ...prev, district: e.target.value }))}
+          />
+        </div>
         <div>
-          <label className="mb-1 block text-sm font-semibold text-slate-700">Education</label>
+          <label className="mb-1.5 block min-h-10 text-sm font-semibold text-slate-700">Education</label>
           <select
             className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
             value={filters.educationLevel}
@@ -279,13 +327,16 @@ const CandidateProfiles = () => {
             ))}
           </select>
         </div>
-        <Input
-          label="Faculty"
-          value={filters.faculty}
-          onChange={(e) => setFilters((prev) => ({ ...prev, faculty: e.target.value }))}
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="min-h-10 text-sm font-semibold text-slate-700">Faculty</label>
+          <input
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            value={filters.faculty}
+            onChange={(e) => setFilters((prev) => ({ ...prev, faculty: e.target.value }))}
+          />
+        </div>
         <div>
-          <label className="mb-1 block text-sm font-semibold text-slate-700">Program</label>
+          <label className="mb-1.5 block min-h-10 text-sm font-semibold text-slate-700">Program</label>
           <select
             className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
             value={filters.selectedProgram}
@@ -300,7 +351,7 @@ const CandidateProfiles = () => {
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-semibold text-slate-700">Training Status</label>
+          <label className="mb-1.5 block min-h-10 text-sm font-semibold text-slate-700">Training Status</label>
           <select
             className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
             value={filters.trainingStatus}
@@ -386,6 +437,7 @@ const CandidateProfiles = () => {
       <Modal open={openForm} title="Visitor Registration" onClose={() => setOpenForm(false)} footer={null} size="lg">
         <form onSubmit={handleSave} className="space-y-3">
           <div className="grid gap-3 md:grid-cols-2">
+            <Input label="ID No" value={form.idNo || ""} placeholder="Auto generated (VIS001...)" disabled />
             <Input
               label="Full Name"
               value={form.fullName}
@@ -434,13 +486,13 @@ const CandidateProfiles = () => {
                 ))}
               </select>
             </div>
-            <Input
-              label="Faculty"
-              value={form.faculty}
-              onChange={(e) => handleFormChange({ faculty: e.target.value })}
-              required={form.educationLevel !== "NONE"}
-              disabled={form.educationLevel === "NONE"}
-            />
+              <Input
+                label="Faculty"
+                value={form.faculty}
+                onChange={(e) => handleFormChange({ faculty: e.target.value })}
+                required={!!form.educationLevel && form.educationLevel !== "NONE"}
+                disabled={!form.educationLevel || form.educationLevel === "NONE"}
+              />
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
@@ -476,7 +528,6 @@ const CandidateProfiles = () => {
             ) : (
               <Input label="Hospitality Type" value="N/A" disabled />
             )}
-            <Input label="ID No" value={form.idNo || ""} placeholder="Auto generated (VIS001...)" disabled />
           </div>
           <Input
             label="Other Skills (optional)"

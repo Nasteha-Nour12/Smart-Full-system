@@ -10,6 +10,7 @@ import {
   deleteProfileByUserId,
   upsertProfileByAdmin,
   importProfilesByAdmin,
+  getProgramModuleCounts,
   syncProfilesToPrograms,
 } from "../controller/candidateProfileController.js";
 import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
@@ -31,6 +32,7 @@ router.delete("/me/skills/:skillId", authenticate, removeSkill);
    ADMIN
 ============================ */
 router.get("/", authenticate, authorizeRoles("ADMIN"), getAllProfiles);
+router.get("/module-counts", authenticate, authorizeRoles("ADMIN"), getProgramModuleCounts);
 router.post("/admin-upsert", authenticate, authorizeRoles("ADMIN"), upsertProfileByAdmin);
 router.post("/import", authenticate, authorizeRoles("ADMIN"), importProfilesByAdmin);
 router.post("/sync-programs", authenticate, authorizeRoles("ADMIN"), syncProfilesToPrograms);

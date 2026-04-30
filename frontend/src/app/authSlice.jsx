@@ -1,6 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginRequest, registerRequest, logoutRequest, meRequest } from "../api/auth.api";
 
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("smart-ses-user") || "null");
+  } catch {
+    return null;
+  }
+};
+
+const hasStoredToken = () =>
+  !!(localStorage.getItem("smart-ses-token") || localStorage.getItem("token"));
+
+const storedUser = getStoredUser();
+
 const persistUser = (user) => {
   if (user) {
     localStorage.setItem("smart-ses-user", JSON.stringify(user));
@@ -64,9 +77,10 @@ export const loadUser = createAsyncThunk("auth/loadUser", async (_, thunkAPI) =>
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: null,
-    isAuthenticated: false,
+    user: storedUser,
+    isAuthenticated: !!storedUser && hasStoredToken(),
     loading: false,
+    initialized: false,
     error: null,
   },
   reducers: {
@@ -75,6 +89,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.loading = false;
+      state.initialized = true;
       persistUser(null);
     },
     clearAuthError: (state) => {
@@ -92,11 +107,13 @@ const authSlice = createSlice({
         state.user = action.payload || null;
         state.isAuthenticated = !!state.user;
         state.loading = false;
+        state.initialized = true;
         persistUser(state.user);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.error = action.payload;
         state.loading = false;
+        state.initialized = true;
       })
 
       // LOGIN
@@ -108,11 +125,13 @@ const authSlice = createSlice({
         state.user = action.payload || null;
         state.isAuthenticated = !!state.user;
         state.loading = false;
+        state.initialized = true;
         persistUser(state.user);
       })
       .addCase(login.rejected, (state, action) => {
         state.error = action.payload;
         state.loading = false;
+        state.initialized = true;
       })
 
       // LOAD USER
@@ -123,12 +142,14 @@ const authSlice = createSlice({
         state.user = action.payload || null;
         state.isAuthenticated = !!state.user;
         state.loading = false;
+        state.initialized = true;
         persistUser(state.user);
       })
       .addCase(loadUser.rejected, (state) => {
         state.user = null;
         state.isAuthenticated = false;
         state.loading = false;
+        state.initialized = true;
         persistUser(null);
       })
 
@@ -137,6 +158,7 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.loading = false;
+        state.initialized = true;
         state.error = null;
         persistUser(null);
       });
