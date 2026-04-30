@@ -33,7 +33,10 @@ const FileUploadField = ({
 
   const openInBrowser = () => {
     if (!value) return;
-    window.open(value, "_blank", "noopener,noreferrer");
+    const resolvedUrl = /^https?:\/\//i.test(value)
+      ? value
+      : new URL(value, window.location.origin).toString();
+    window.open(resolvedUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
