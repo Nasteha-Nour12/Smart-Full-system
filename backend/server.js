@@ -13,6 +13,7 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import trainingProgramRoutes from "./routes/trainingProgramRoutes.js";
 import hospitalityProgramRoutes from "./routes/hospitalityProgramRoutes.js";
 import roleConfigRoutes from "./routes/roleConfigRoutes.js";
+import systemBackupRoutes from "./routes/systemBackupRoutes.js";
 import cookieParser from 'cookie-parser';
 import cors from "cors"
 import mongoose from "mongoose";
@@ -97,6 +98,7 @@ app.use("/api/uploads", uploadRoutes);
 app.use("/api/training-programs", trainingProgramRoutes);
 app.use("/api/hospitality-programs", hospitalityProgramRoutes);
 app.use("/api/roles", roleConfigRoutes);
+app.use("/api/system", systemBackupRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // forget password
 

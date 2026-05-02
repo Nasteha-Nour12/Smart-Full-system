@@ -32,7 +32,7 @@ const Sidebar = ({ open, onClose }) => {
         onClick={onClose}
       />
       <aside
-        className={`ses-panel ses-sidebar fixed left-3 top-[84px] z-30 h-[calc(100vh-100px)] w-[270px] shrink-0 rounded-2xl p-4 text-slate-800 transition-transform md:static md:z-auto md:h-auto md:w-64 md:translate-x-0 ${
+        className={`ses-panel ses-sidebar fixed left-3 top-[84px] z-30 h-[calc(100vh-100px)] w-[270px] shrink-0 overflow-y-auto rounded-2xl p-4 text-slate-800 transition-transform md:sticky md:top-0 md:z-auto md:h-full md:w-64 md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-[120%]"
         }`}
       >

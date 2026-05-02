@@ -36,6 +36,40 @@ const FileUploadField = ({
     const resolvedUrl = /^https?:\/\//i.test(value)
       ? value
       : new URL(value, window.location.origin).toString();
+    const ext = (resolvedUrl.split(".").pop() || "").toLowerCase().split(/[?#]/)[0];
+    const inlineTypes = new Set([
+      "pdf",
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "webp",
+      "svg",
+      "txt",
+      "csv",
+      "json",
+    ]);
+    const officeTypes = new Set([
+      "doc",
+      "docx",
+      "xls",
+      "xlsx",
+      "ppt",
+      "pptx",
+    ]);
+
+    if (officeTypes.has(ext)) {
+      const viewerUrl = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(resolvedUrl)}`;
+      window.open(viewerUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (inlineTypes.has(ext)) {
+      window.open(resolvedUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // Fallback for unknown extensions: still try direct open first.
     window.open(resolvedUrl, "_blank", "noopener,noreferrer");
   };
 

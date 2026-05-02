@@ -8,6 +8,7 @@ import { createRoleRequest, deleteRoleRequest, getRolesRequest, updateRoleReques
 import { addNotification } from "../../utils/notifications";
 import { PAGE_ACCESS_OPTIONS } from "../../constants/pageAccess";
 import { getErrorMessage } from "../../utils/formatters";
+import { downloadSystemBackupRequest, restoreSystemBackupRequest } from "../../api/systemBackup.api";
 
 const emptyRoleForm = {
   name: "",
@@ -23,6 +24,9 @@ const Settings = () => {
   const [roleForm, setRoleForm] = useState(emptyRoleForm);
   const [editingRoleId, setEditingRoleId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [backupFile, setBackupFile] = useState(null);
 
   const loadRoles = async () => {
     try {
@@ -108,6 +112,48 @@ const Settings = () => {
     }
   };
 
+  const handleDownloadBackup = async () => {
+    try {
+      setBackupLoading(true);
+      const res = await downloadSystemBackupRequest();
+      const blob = new Blob([res.data], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      link.href = url;
+      link.download = `system-backup-${stamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      addNotification({ title: "Backup Ready", message: "System backup JSON downloaded.", type: "success" });
+    } catch (error) {
+      addNotification({ title: "Backup Failed", message: getErrorMessage(error, "Could not download backup"), type: "error" });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleRestoreBackup = async () => {
+    if (!backupFile) {
+      addNotification({ title: "No File", message: "Please choose a JSON backup file first.", type: "warning" });
+      return;
+    }
+
+    try {
+      setRestoreLoading(true);
+      const fileText = await backupFile.text();
+      const payload = JSON.parse(fileText);
+      await restoreSystemBackupRequest(payload);
+      addNotification({ title: "Restore Completed", message: "System data restored successfully.", type: "success" });
+      setBackupFile(null);
+    } catch (error) {
+      addNotification({ title: "Restore Failed", message: getErrorMessage(error, "Could not restore backup"), type: "error" });
+    } finally {
+      setRestoreLoading(false);
+    }
+  };
+
   return (
     <div>
       <PageTitle title="Settings" subtitle="Profile, notifications, and role access configurations" />
@@ -115,6 +161,7 @@ const Settings = () => {
         <button type="button" className={tabClass("profile")} onClick={() => setActiveTab("profile")}>Profile</button>
         <button type="button" className={tabClass("notifications")} onClick={() => setActiveTab("notifications")}>Notifications</button>
         <button type="button" className={tabClass("roles")} onClick={() => setActiveTab("roles")}>Role Configurations</button>
+        <button type="button" className={tabClass("backup")} onClick={() => setActiveTab("backup")}>Backup & Restore</button>
       </div>
 
       {activeTab === "profile" ? (
@@ -213,6 +260,28 @@ const Settings = () => {
               ))}
               {roles.length === 0 ? <p className="text-sm text-slate-500">No roles found.</p> : null}
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "backup" ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl bg-white p-6 shadow">
+            <p className="mb-3 text-sm font-semibold text-slate-800">Download Backup</p>
+            <p className="mb-4 text-sm text-slate-600">Download full system data as JSON.</p>
+            <Button onClick={handleDownloadBackup} loading={backupLoading}>Download JSON Backup</Button>
+          </div>
+
+          <div className="rounded-xl bg-white p-6 shadow">
+            <p className="mb-3 text-sm font-semibold text-slate-800">Restore Backup</p>
+            <p className="mb-4 text-sm text-slate-600">Upload a JSON backup file to restore system data.</p>
+            <input
+              type="file"
+              accept="application/json,.json"
+              onChange={(e) => setBackupFile(e.target.files?.[0] || null)}
+              className="mb-4 block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"
+            />
+            <Button variant="secondary" onClick={handleRestoreBackup} loading={restoreLoading}>Restore From File</Button>
           </div>
         </div>
       ) : null}
